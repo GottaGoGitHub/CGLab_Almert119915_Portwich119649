@@ -146,12 +146,28 @@ void ApplicationSolar::keyCallback(int key, int action, int mods) {
   } else if (key == GLFW_KEY_D && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
       m_view_transform = glm::translate(m_view_transform, glm::fvec3{0.1f, 0.0f, 0.0f});
       uploadView();
+  } else if (key == GLFW_KEY_R && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+      m_view_transform = glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f});
+      uploadView();
   }
+
 }
 
 //handle delta mouse movement input
 void ApplicationSolar::mouseCallback(double pos_x, double pos_y) {
-  // mouse handling
+    // mouse handling
+    float angle_pan = -pos_x;
+    float angle_tilt = -pos_y;
+
+// use the higher value and apply the rotation around this value
+    if (std::abs(angle_pan) > std::abs(angle_tilt)) {
+        m_view_transform = glm::rotate(m_view_transform, glm::radians(angle_pan), glm::vec3{0, 1, 0});
+    } else {
+        m_view_transform = glm::rotate(m_view_transform, glm::radians(angle_tilt), glm::vec3{1, 0, 0});
+    }
+
+    // update ViewMatrix
+    uploadView();
 }
 
 //handle resizing
