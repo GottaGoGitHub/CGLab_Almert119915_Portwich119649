@@ -1,4 +1,5 @@
 #include "Node.hpp"
+#include "SceneGraph.hpp"
 #include <iostream>
 
 int main() {
@@ -11,8 +12,12 @@ int main() {
     root->addChildren(ch1);
     ch1->addChildren(ch2);
     ch2->addChildren(ch3);
-    std::cout << root->getChildren("ch3")->getName();
-    root->removeChildren("ch3");
-    root->getChildren("ch3");
+    std::cout << root->getChildren("ch3")->getName() << std::endl;
+    auto ch12 = std::make_shared<Node>(Node("ch12", root));
+    auto ch22 = std::make_shared<Node>(Node("ch22", ch1));
+    root->addChildren(ch12);
+    ch1->addChildren(ch22);
+    auto szene = std::make_shared<SceneGraph>(SceneGraph("szene", root));
+    szene->printGraph();
 
 }
