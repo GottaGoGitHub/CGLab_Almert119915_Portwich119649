@@ -157,8 +157,9 @@ void ApplicationSolar::keyCallback(int key, int action, int mods) {
 //handle delta mouse movement input
 void ApplicationSolar::mouseCallback(double pos_x, double pos_y) {
     // mouse handling
-    float angle_pan = -pos_x;
-    float angle_tilt = -pos_y;
+    float mouse_sens = 20.0f;
+    float angle_pan = -pos_x / mouse_sens;
+    float angle_tilt = -pos_y / mouse_sens;
 
 // use the higher value and apply the rotation around this value
     if (std::abs(angle_pan) > std::abs(angle_tilt)) {
