@@ -19,29 +19,34 @@ private:
 
 public:
     // constructor
-    Node(std::string const &name);
+    explicit Node(std::string name);
 
-    Node(std::string const &name, std::shared_ptr<Node> const &parent);
+    Node(std::string name, std::shared_ptr<Node> const &parent);
 
     // destructor
     ~Node();
 
+    // return parent node
     std::shared_ptr<Node> getParent();
 
-    void setParent(std::shared_ptr<Node> const &node);
+    // set parent and update depth & path
+    void setParent(std::shared_ptr<Node> const &parent);
 
-    std::shared_ptr<Node> getChildren();
+    std::shared_ptr<Node> getChildren(std::string const &name);
 
     std::shared_ptr<Node> removeChildren(std::string const &name);
 
-    std::list<Node> getChildrenList();
+    std::list<std::shared_ptr<Node>> getChildrenList();
 
     void addChildren(std::shared_ptr<Node> const &node);
 
+    // return name
     std::string getName();
 
+    // return path
     std::string getPath();
 
+    // return depth
     int getDepth();
 
     glm::mat4 getLocalTransform();

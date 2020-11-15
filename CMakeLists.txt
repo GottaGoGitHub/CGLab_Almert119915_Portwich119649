@@ -113,9 +113,12 @@ endif()
 # remove external configuration vars from cmake gui
 mark_as_advanced(OPTION_SELF_CONTAINED)
 mark_as_advanced(GLFW_BUILD_DOCS GLFW_BUILD_TESTS GLFW_INSTALL GLFW_BUILD_EXAMPLES
- GLFW_DOCUMENT_INTERNALS GLFW_USE_EGL GLFW_USE_MIR GLFW_USE_WAYLAND GLFW_LIBRARIES
- LIB_SUFFIX BUILD_SHARED_LIBS)
+        GLFW_DOCUMENT_INTERNALS GLFW_USE_EGL GLFW_USE_MIR GLFW_USE_WAYLAND GLFW_LIBRARIES
+        LIB_SUFFIX BUILD_SHARED_LIBS)
 
 SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 # installation rules, copy over binaries to bin
 # install(TARGETS OpenGLFramework DESTINATION bin)
+
+add_executable(tests framework/tests/tests.cpp)
+target_link_libraries(tests framework)
