@@ -3,6 +3,8 @@
 #include <utility>
 #include <iostream>
 
+Node::Node() {}
+
 Node::Node(std::string name) :
         name_(std::move(name)), // move semantic
         path_("/" + name_),

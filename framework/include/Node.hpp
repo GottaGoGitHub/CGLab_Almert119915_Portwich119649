@@ -19,6 +19,8 @@ private:
 
 public:
     // constructor
+    Node();
+
     explicit Node(std::string name);
 
     Node(std::string name, std::shared_ptr<Node> const &parent);

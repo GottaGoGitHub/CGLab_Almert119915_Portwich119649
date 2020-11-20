@@ -11,12 +11,14 @@ private:
     glm::mat4 projectionMatrix_;
 
 public:
+    // constructors
     CameraNode();
 
     CameraNode(bool isPerspective, bool isEnabled);
 
     CameraNode(bool isPerspective, bool isEnabled, glm::mat4 const &projectionMatrix);
 
+    // getter and setter
     bool getPerspective();
 
     bool getEnabled();
