@@ -21,9 +21,11 @@ public:
     // getter and setter
     bool getPerspective();
 
+    void setPerspective(bool perspective);
+
     bool getEnabled();
 
-    void setEnabled(bool);
+    void setEnabled(bool enabled);
 
     glm::mat4 getProjectionMatrix();
 
