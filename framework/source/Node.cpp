@@ -1,6 +1,7 @@
 #include "Node.hpp"
 
 #include <utility>
+#include <iostream>
 
 Node::Node(std::string name) :
         name_(std::move(name)), // move semantic
@@ -88,6 +89,16 @@ std::shared_ptr<Node> Node::getChildren(std::string const &name) {
     }
     // nothing found :(
     return nullptr;
+}
+
+void Node::printChildren(int level) {
+    if (level == 0)
+        std::cout << "." << "- " << this->getName() << std::endl;
+    else
+        std::cout << std::string(level, '|') << "- " << this->getName() << std::endl;
+    for (auto child: children_) {
+        child->printChildren(level + 1);
+    }
 }
 
 std::list<std::shared_ptr<Node>> Node::getChildrenList() {

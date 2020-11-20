@@ -40,6 +40,8 @@ public:
 
     void addChildren(std::shared_ptr<Node> const &node);
 
+    void printChildren(int level = 0);
+
     // return name
     std::string getName();
 
