@@ -10,6 +10,8 @@ Node::Node(std::string name) :
         path_("/" + name_),
         parent_(nullptr) {
     depth_ = 0;
+    localTransform_ = glm::mat4(1.0f);
+    worldTransform_ = glm::mat4(1.0f);
 }
 
 Node::Node(std::string name, const std::shared_ptr<Node> &parent) :
@@ -17,6 +19,8 @@ Node::Node(std::string name, const std::shared_ptr<Node> &parent) :
         parent_(parent) {
     path_ = getPath();
     depth_ = parent->getDepth() + 1;
+    localTransform_ = glm::mat4(1.0f);
+    worldTransform_ = glm::mat4(1.0f);
 }
 
 Node::~Node() = default;
