@@ -2,19 +2,19 @@
 
 
 GeometryNode::GeometryNode(std::string name):
-    Node(name),
+    Node(std::move(name)),
     geometry_{model()}
 {}
 
 GeometryNode::GeometryNode(const std::shared_ptr<Node> &node, std::string name) :
-        Node(name, node) {}
+        Node(std::move(name), node) {}
 
 GeometryNode::~GeometryNode() = default;
 
-model GeometryNode::getGeometry() const {
+model GeometryNode::getGeometry() const{
     return geometry_;
 }
 
-void GeometryNode::setGeometry(model const &geometry) {
+void GeometryNode::setGeometry(model const& geometry) {
     geometry_ = geometry;
 }
