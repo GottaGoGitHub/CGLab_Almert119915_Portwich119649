@@ -14,7 +14,7 @@ Node::Node(std::string name) :
     worldTransform_ = glm::mat4(1.0f);
     speed_ = 1.0f;
     size_ = 1.0f;
-    distance_ = 1.0f;
+    distance_ = 0.0f;
 }
 
 Node::Node(std::string name, const std::shared_ptr<Node> &parent) :
@@ -26,7 +26,7 @@ Node::Node(std::string name, const std::shared_ptr<Node> &parent) :
     worldTransform_ = glm::mat4(1.0f);
     speed_ = 1.0f;
     size_ = 1.0f;
-    distance_ = 1.0f;
+    distance_ = 0.0f;
 }
 
 Node::~Node() = default;
