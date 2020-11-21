@@ -19,6 +19,10 @@ using namespace gl;
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+#include <memory>
+#include <Node.hpp>
+#include <SceneGraph.hpp>
+#include <GeometryNode.hpp>
 
 ApplicationSolar::ApplicationSolar(std::string const &resource_path)
         : Application{resource_path}, planet_object{},
@@ -35,24 +39,28 @@ ApplicationSolar::~ApplicationSolar() {
 }
 
 void ApplicationSolar::render() const {
+    SceneGraph solarSystem = initializeSolarSystem();
+    auto earth = std::static_pointer_cast<GeometryNode>(solarSystem.getRoot()->getChildren("earth"));
     // bind shader to upload uniforms
     glUseProgram(m_shaders.at("planet").handle);
-
-    glm::fmat4 model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime()), glm::fvec3{0.0f, 1.0f, 0.0f});
-    model_matrix = glm::translate(model_matrix, glm::fvec3{0.0f, 0.0f, -1.0f});
+    std::cout << earth->getName();
+    earth->setWorldTransform(glm::rotate(glm::fmat4{}, float(glfwGetTime()), glm::fvec3{0.0f, 1.0f, 0.0f}));
+    earth->setWorldTransform(glm::translate(earth->getWorldTransform(), glm::fvec3{0.0f, 0.0f, -1.0f}));
     glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
-                       1, GL_FALSE, glm::value_ptr(model_matrix));
+                       1, GL_FALSE, glm::value_ptr(earth->getWorldTransform()));
 
     // extra matrix for normal transformation to keep them orthogonal to surface
-    glm::fmat4 normal_matrix = glm::inverseTranspose(glm::inverse(m_view_transform) * model_matrix);
+    earth->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * earth->getWorldTransform()));
     glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
-                       1, GL_FALSE, glm::value_ptr(normal_matrix));
+                       1, GL_FALSE, glm::value_ptr(earth->getLocalTransform()));
 
     // bind the VAO to draw
-    glBindVertexArray(planet_object.vertex_AO);
+    glBindVertexArray(earth->getModelObject().vertex_AO);
 
     // draw bound vertex array using bound shader
-    glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
+    glDrawElements(earth->getModelObject().draw_mode, earth->getModelObject().num_elements, model::INDEX.type, NULL);
+
+
 }
 
 void ApplicationSolar::uploadView() {
@@ -79,6 +87,16 @@ void ApplicationSolar::uploadUniforms() {
 }
 
 ///////////////////////////// intialisation functions /////////////////////////
+SceneGraph ApplicationSolar::initializeSolarSystem() const {
+    std::shared_ptr<Node> root = std::make_shared<Node>("root");
+    SceneGraph solarSystem = SceneGraph("solarSystem", root);
+    std::shared_ptr<Node> earth_node = std::make_shared<Node>("earth", root);
+    std::shared_ptr<GeometryNode> geo_earth = std::make_shared<GeometryNode>(earth_node, "geo_earth");
+    root->addChildren(earth_node);
+    geo_earth->setModelObject(planet_object);
+    return solarSystem;
+}
+
 // load shader sources
 void ApplicationSolar::initializeShaderPrograms() {
     // store shader program objects in container

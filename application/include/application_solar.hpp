@@ -1,6 +1,7 @@
 #ifndef APPLICATION_SOLAR_HPP
 #define APPLICATION_SOLAR_HPP
 
+#include <SceneGraph.hpp>
 #include "application.hpp"
 #include "model.hpp"
 #include "structs.hpp"
@@ -27,6 +28,9 @@ public:
     void render() const;
 
 protected:
+
+    SceneGraph initializeSolarSystem() const;
+
     void initializeShaderPrograms();
 
     void initializeGeometry();

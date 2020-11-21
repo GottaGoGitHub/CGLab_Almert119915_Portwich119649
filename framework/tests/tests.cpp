@@ -1,6 +1,7 @@
 #include "Node.hpp"
 #include "SceneGraph.hpp"
 #include <iostream>
+#include <GeometryNode.hpp>
 
 int main() {
     auto ch1 = std::make_shared<Node>(Node("ch1"));
@@ -19,5 +20,13 @@ int main() {
     ch1->addChildren(ch22);
     auto szene = std::make_shared<SceneGraph>(SceneGraph("szene", root));
     szene->printGraph();
+
+    auto rooty = std::make_shared<Node>("root");
+    SceneGraph solar = SceneGraph("solar", rooty);
+    auto gm1 = std::make_shared<GeometryNode>("geo1");
+    rooty->addChildren(gm1);
+    std::shared_ptr<GeometryNode> xe = std::static_pointer_cast<GeometryNode>(rooty->getChildren("geo1"));
+    std::cout << xe->getName();
+    std::cout << xe->getPath();
 
 }

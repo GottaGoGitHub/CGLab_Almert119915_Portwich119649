@@ -3,23 +3,34 @@
 
 # include "Node.hpp"
 #include "model.hpp"
+#include "structs.hpp"
 
 class GeometryNode : public Node {
-    public:
+public:
     // constructor
-    explicit GeometryNode(std::string name);
-    GeometryNode(std::string name, std::shared_ptr<Node> const &parent, model geometry);
+    explicit GeometryNode(std::shared_ptr<Node> node_ptr);
+
+    GeometryNode(std::string name);
+
+    GeometryNode(const std::shared_ptr<Node> &node, std::string name);
 
     // destructor
     ~GeometryNode();
 
     // Getter und Setter
     model getGeometry() const;
-    void setGeometry(model const& geometry);
 
-    private:
+    void setGeometry(model const &geometry);
+
+    model_object getModelObject() const;
+
+    void setModelObject(model_object const &modelObject);
+
+
+private:
     // Member
     model geometry_;
+    model_object modelObject_;
 };
 
 
