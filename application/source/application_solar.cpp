@@ -95,14 +95,50 @@ void ApplicationSolar::uploadUniforms() {
 
 ///////////////////////////// intialisation functions /////////////////////////
 SceneGraph ApplicationSolar::initializeSolarSystem() const {
+    // scenegraph with root
     std::shared_ptr<Node> root = std::make_shared<Node>("root");
     SceneGraph solarSystem = SceneGraph("solarSystem", root);
-    std::shared_ptr<Node> earth_node = std::make_shared<Node>("earth", root);
-    std::shared_ptr<GeometryNode> geo_earth = std::make_shared<GeometryNode>(earth_node, "geo_earth");
-    root->addChildren(earth_node);
-    std::shared_ptr<Node> saturn_node = std::make_shared<Node>("saturn", root);
-    std::shared_ptr<GeometryNode> geo_saturn = std::make_shared<GeometryNode>(saturn_node, "geo_saturn");
-    root->addChildren(saturn_node);
+
+    // merkur
+    std::shared_ptr<Node> merkur_holder = std::make_shared<Node>("merkur", root);
+    std::shared_ptr<GeometryNode> geo_merkur = std::make_shared<GeometryNode>(merkur_holder, "geo_merkur");
+    root->addChildren(merkur_holder);
+
+    // venus
+    std::shared_ptr<Node> venus_holder = std::make_shared<Node>("venus", root);
+    std::shared_ptr<GeometryNode> geo_venus = std::make_shared<GeometryNode>(merkur_holder, "geo_venus");
+    root->addChildren(venus_holder);
+
+    // earth planet
+    std::shared_ptr<Node> earth_holder = std::make_shared<Node>("earth", root);
+    std::shared_ptr<GeometryNode> geo_earth = std::make_shared<GeometryNode>(earth_holder, "geo_earth");
+    root->addChildren(earth_holder);
+
+    // mars
+    std::shared_ptr<Node> mars_holder = std::make_shared<Node>("mars", root);
+    std::shared_ptr<GeometryNode> mars = std::make_shared<GeometryNode>(mars_holder, "geo_mars");
+    root->addChildren(mars_holder);
+
+    // jupiter
+    std::shared_ptr<Node> jupiter_holder = std::make_shared<Node>("jupiter", root);
+    std::shared_ptr<GeometryNode> jupiter = std::make_shared<GeometryNode>(jupiter_holder, "geo_jupiter");
+    root->addChildren(jupiter_holder);
+
+    // saturn
+    std::shared_ptr<Node> saturn_holder = std::make_shared<Node>("saturn", root);
+    std::shared_ptr<GeometryNode> geo_saturn = std::make_shared<GeometryNode>(saturn_holder, "geo_saturn");
+    root->addChildren(saturn_holder);
+
+    // uranus
+    std::shared_ptr<Node> uranus_holder = std::make_shared<Node>("uranus", root);
+    std::shared_ptr<GeometryNode> uranus = std::make_shared<GeometryNode>(uranus_holder, "geo_uranus");
+    root->addChildren(uranus_holder);
+
+    // neptun
+    std::shared_ptr<Node> neptun_holder = std::make_shared<Node>("neptun", root);
+    std::shared_ptr<GeometryNode> geo_neptun = std::make_shared<GeometryNode>(saturn_holder, "geo_neptun");
+    root->addChildren(neptun_holder);
+
     return solarSystem;
 }
 

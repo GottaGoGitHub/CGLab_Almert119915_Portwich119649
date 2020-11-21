@@ -6,8 +6,10 @@ GeometryNode::GeometryNode(std::string name):
     geometry_{model()}
 {}
 
-GeometryNode::GeometryNode(const std::shared_ptr<Node> &node, std::string name) :
-        Node(std::move(name), node) {}
+GeometryNode::GeometryNode(const std::shared_ptr<Node> &parent, std::string name) :
+        Node(std::move(name)) {
+    this->setParent(parent);
+}
 
 GeometryNode::~GeometryNode() = default;
 

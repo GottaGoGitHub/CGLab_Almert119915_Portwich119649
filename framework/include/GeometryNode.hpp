@@ -8,11 +8,10 @@
 class GeometryNode : public Node {
 public:
     // constructor
-    explicit GeometryNode(std::shared_ptr<Node> node_ptr);
 
-    GeometryNode(std::string name);
+    explicit GeometryNode(std::string name);
 
-    GeometryNode(const std::shared_ptr<Node> &node, std::string name);
+    GeometryNode(const std::shared_ptr<Node> &parent, std::string name);
 
     // destructor
     ~GeometryNode();
