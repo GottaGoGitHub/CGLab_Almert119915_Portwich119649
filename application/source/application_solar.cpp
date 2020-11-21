@@ -43,18 +43,23 @@ void ApplicationSolar::render() const {
     // bind shader to upload uniforms
     glUseProgram(m_shaders.at("planet").handle);
     SceneGraph solarSystem = initializeSolarSystem();
-    auto earth = std::static_pointer_cast<GeometryNode>(solarSystem.getRoot()->getChildren("earth"));
-    auto saturn = std::static_pointer_cast<GeometryNode>(solarSystem.getRoot()->getChildren("saturn"));
+    auto earth = solarSystem.getRoot()->getChildren("earth");
+    auto mars = solarSystem.getRoot()->getChildren("mars");
+    auto sun = solarSystem.getRoot()->getChildren("sun");
+    auto children = solarSystem.getRoot()->getChildrenList();
+    //auto children = std::vector<std::shared_ptr<Node>>();
+//    liste.push_back(earth);
+//    liste.push_back(mars);
+//    liste.push_back(sun);
 
-    auto liste = std::vector<std::shared_ptr<GeometryNode>>();
-    liste.push_back(earth);
-    liste.push_back(saturn);
 
-    for (int i = 0; i < liste.size(); i++) {
+    for (auto child: children) {
         //glm::mat4x4 model_matrix = glm::mat4(1.0f);
-        glm::mat4 model_matrix = liste[i]->getWorldTransform();
-        model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime() * i * 10), glm::fvec3{0.0f, 1.0f, 0.0f});
-        model_matrix = glm::translate(model_matrix, glm::fvec3{0.0f, 0.0f, -1.0f});
+        glm::mat4 model_matrix = child->getWorldTransform();
+        model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime() * child->getSpeed()),
+                                   glm::fvec3{0.0f, 1.0f, 0.0f});
+        model_matrix = glm::translate(model_matrix, glm::fvec3{0.0f, 0.0f, child->getDistance() * 2});
+        model_matrix = glm::scale(model_matrix, glm::vec3(child->getSize(), child->getSize(), child->getSize()));
         glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
                            1, GL_FALSE, glm::value_ptr(model_matrix));
 
@@ -103,46 +108,81 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> sun_holder = std::make_shared<Node>("sun", root);
     std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
     root->addChildren(sun_holder);
+    sun_holder->setDistance(0.0f);
+    sun_holder->setSize(3.0f);
+    sun_holder->addChildren(geo_sun);
 
     // merkur
     std::shared_ptr<Node> merkur_holder = std::make_shared<Node>("merkur", root);
     std::shared_ptr<GeometryNode> geo_merkur = std::make_shared<GeometryNode>(merkur_holder, "geo_merkur");
+    merkur_holder->setSpeed(4.147f);
+    merkur_holder->setDistance(4.0f);
+    merkur_holder->setSize(0.40f);
     root->addChildren(merkur_holder);
+    merkur_holder->addChildren(geo_merkur);
 
     // venus
     std::shared_ptr<Node> venus_holder = std::make_shared<Node>("venus", root);
     std::shared_ptr<GeometryNode> geo_venus = std::make_shared<GeometryNode>(merkur_holder, "geo_venus");
+    venus_holder->setSpeed(2.624f);
+    venus_holder->setDistance(7.0f);
+    venus_holder->setSize(0.9f);
     root->addChildren(venus_holder);
+    venus_holder->addChildren(geo_venus);
 
     // earth planet
     std::shared_ptr<Node> earth_holder = std::make_shared<Node>("earth", root);
     std::shared_ptr<GeometryNode> geo_earth = std::make_shared<GeometryNode>(earth_holder, "geo_earth");
+    earth_holder->setSpeed(1.0f);
+    earth_holder->setDistance(10.0f);
+    earth_holder->setSize(1.0f);
     root->addChildren(earth_holder);
+    earth_holder->addChildren(geo_earth);
 
     // mars
     std::shared_ptr<Node> mars_holder = std::make_shared<Node>("mars", root);
     std::shared_ptr<GeometryNode> geo_mars = std::make_shared<GeometryNode>(mars_holder, "geo_mars");
+    mars_holder->setSpeed(0.831f);
+    mars_holder->setDistance(14.0f);
+    mars_holder->setSize(0.5f);
     root->addChildren(mars_holder);
+    mars_holder->addChildren(geo_mars);
 
     // jupiter
     std::shared_ptr<Node> jupiter_holder = std::make_shared<Node>("jupiter", root);
     std::shared_ptr<GeometryNode> geo_jupiter = std::make_shared<GeometryNode>(jupiter_holder, "geo_jupiter");
+    jupiter_holder->setSpeed(0.943f);
+    jupiter_holder->setDistance(18.0f);
+    jupiter_holder->setSize(1.20f);
     root->addChildren(jupiter_holder);
+    jupiter_holder->addChildren(geo_jupiter);
 
     // saturn
     std::shared_ptr<Node> saturn_holder = std::make_shared<Node>("saturn", root);
     std::shared_ptr<GeometryNode> geo_saturn = std::make_shared<GeometryNode>(saturn_holder, "geo_saturn");
+    saturn_holder->setSpeed(0.74f);
+    saturn_holder->setDistance(22.0f);
+    saturn_holder->setSize(1.350f);
     root->addChildren(saturn_holder);
+    saturn_holder->addChildren(geo_saturn);
 
     // uranus
     std::shared_ptr<Node> uranus_holder = std::make_shared<Node>("uranus", root);
     std::shared_ptr<GeometryNode> geo_uranus = std::make_shared<GeometryNode>(uranus_holder, "geo_uranus");
+    uranus_holder->setSpeed(0.65f);
+    uranus_holder->setDistance(25.0f);
+    uranus_holder->setSize(1.1f);
     root->addChildren(uranus_holder);
+    uranus_holder->addChildren(geo_uranus);
 
     // neptun
     std::shared_ptr<Node> neptun_holder = std::make_shared<Node>("neptun", root);
     std::shared_ptr<GeometryNode> geo_neptun = std::make_shared<GeometryNode>(saturn_holder, "geo_neptun");
+    neptun_holder->setSpeed(0.607f);
+    neptun_holder->setDistance(35.0f);
+    neptun_holder->setSize(1.05f);
     root->addChildren(neptun_holder);
+    neptun_holder->addChildren(geo_neptun);
 
     return solarSystem;
 }
@@ -218,8 +258,10 @@ void ApplicationSolar::keyCallback(int key, int action, int mods) {
     } else if (key == GLFW_KEY_SPACE && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
         m_view_transform = glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f});
         uploadView();
+    } else if (key == GLFW_KEY_U && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
+        m_view_transform = glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 50.0f, 0.0f});
+        uploadView();
     }
-
 }
 
 //handle delta mouse movement input
