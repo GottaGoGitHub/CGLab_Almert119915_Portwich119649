@@ -99,6 +99,11 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> root = std::make_shared<Node>("root");
     SceneGraph solarSystem = SceneGraph("solarSystem", root);
 
+    // sun
+    std::shared_ptr<Node> sun_holder = std::make_shared<Node>("sun", root);
+    std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
+    root->addChildren(sun_holder);
+
     // merkur
     std::shared_ptr<Node> merkur_holder = std::make_shared<Node>("merkur", root);
     std::shared_ptr<GeometryNode> geo_merkur = std::make_shared<GeometryNode>(merkur_holder, "geo_merkur");
@@ -116,12 +121,12 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
 
     // mars
     std::shared_ptr<Node> mars_holder = std::make_shared<Node>("mars", root);
-    std::shared_ptr<GeometryNode> mars = std::make_shared<GeometryNode>(mars_holder, "geo_mars");
+    std::shared_ptr<GeometryNode> geo_mars = std::make_shared<GeometryNode>(mars_holder, "geo_mars");
     root->addChildren(mars_holder);
 
     // jupiter
     std::shared_ptr<Node> jupiter_holder = std::make_shared<Node>("jupiter", root);
-    std::shared_ptr<GeometryNode> jupiter = std::make_shared<GeometryNode>(jupiter_holder, "geo_jupiter");
+    std::shared_ptr<GeometryNode> geo_jupiter = std::make_shared<GeometryNode>(jupiter_holder, "geo_jupiter");
     root->addChildren(jupiter_holder);
 
     // saturn
@@ -131,7 +136,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
 
     // uranus
     std::shared_ptr<Node> uranus_holder = std::make_shared<Node>("uranus", root);
-    std::shared_ptr<GeometryNode> uranus = std::make_shared<GeometryNode>(uranus_holder, "geo_uranus");
+    std::shared_ptr<GeometryNode> geo_uranus = std::make_shared<GeometryNode>(uranus_holder, "geo_uranus");
     root->addChildren(uranus_holder);
 
     // neptun
