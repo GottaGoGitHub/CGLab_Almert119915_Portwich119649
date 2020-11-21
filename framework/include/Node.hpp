@@ -16,6 +16,10 @@ private:
     glm::mat4 worldTransform_;
     std::shared_ptr<Node> parent_;
     std::list<std::shared_ptr<Node>> children_;
+    float speed_;
+    float distance_;
+    float size_;
+
 
 public:
     // constructor
@@ -60,6 +64,17 @@ public:
     glm::mat4 getWorldTransform();
 
     void setWorldTransform(glm::mat4 const &mat);
+
+    // getter
+    float getSpeed() const;
+    float getDistance() const;
+    float getSize() const;
+
+    // setter
+    void setSpeed(float speed);
+    void setDistance(float distance);
+    void setSize(float size);
+
 };
 
 #endif //NODE_HPP
