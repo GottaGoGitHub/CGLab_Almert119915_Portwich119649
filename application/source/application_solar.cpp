@@ -39,27 +39,34 @@ ApplicationSolar::~ApplicationSolar() {
 }
 
 void ApplicationSolar::render() const {
-    SceneGraph solarSystem = initializeSolarSystem();
-    auto earth = std::static_pointer_cast<GeometryNode>(solarSystem.getRoot()->getChildren("earth"));
+
     // bind shader to upload uniforms
     glUseProgram(m_shaders.at("planet").handle);
-    std::cout << earth->getName();
-    earth->setWorldTransform(glm::rotate(glm::fmat4{}, float(glfwGetTime()), glm::fvec3{0.0f, 1.0f, 0.0f}));
-    earth->setWorldTransform(glm::translate(earth->getWorldTransform(), glm::fvec3{0.0f, 0.0f, -1.0f}));
-    glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
-                       1, GL_FALSE, glm::value_ptr(earth->getWorldTransform()));
+    SceneGraph solarSystem = initializeSolarSystem();
+    auto earth = std::static_pointer_cast<GeometryNode>(solarSystem.getRoot()->getChildren("earth"));
+    auto saturn = std::static_pointer_cast<GeometryNode>(solarSystem.getRoot()->getChildren("saturn"));
+    earth->setSpeed(1.0f);
+    saturn->setSpeed(5.0f);
+    std::list<std::shared_ptr<GeometryNode>> planeten;
+    planeten.push_back(earth);
+    planeten.push_back(saturn);
+    for (auto planet: planeten) {
+        planet->setWorldTransform(
+                glm::rotate(glm::fmat4{}, float(glfwGetTime() * planet->getSpeed()), glm::fvec3{0.0f, 1.0f, 0.0f}));
+        planet->setWorldTransform(glm::translate(planet->getWorldTransform(), glm::fvec3{0.0f, 0.0f, -1.0f}));
+        glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
+                           1, GL_FALSE, glm::value_ptr(planet->getWorldTransform()));
 
-    // extra matrix for normal transformation to keep them orthogonal to surface
-    earth->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * earth->getWorldTransform()));
-    glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
-                       1, GL_FALSE, glm::value_ptr(earth->getLocalTransform()));
-
+        // extra matrix for normal transformation to keep them orthogonal to surface
+        planet->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * planet->getWorldTransform()));
+        glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
+                           1, GL_FALSE, glm::value_ptr(planet->getLocalTransform()));
+    }
     // bind the VAO to draw
-    glBindVertexArray(earth->getModelObject().vertex_AO);
+    glBindVertexArray(planet_object.vertex_AO);
 
     // draw bound vertex array using bound shader
-    glDrawElements(earth->getModelObject().draw_mode, earth->getModelObject().num_elements, model::INDEX.type, NULL);
-
+    glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
 
 }
 
@@ -94,6 +101,10 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<GeometryNode> geo_earth = std::make_shared<GeometryNode>(earth_node, "geo_earth");
     root->addChildren(earth_node);
     geo_earth->setModelObject(planet_object);
+    std::shared_ptr<Node> saturn_node = std::make_shared<Node>("saturn", root);
+    std::shared_ptr<GeometryNode> geo_saturn = std::make_shared<GeometryNode>(saturn_node, "geo_saturn");
+    root->addChildren(saturn_node);
+    geo_saturn->setModelObject(planet_object);
     return solarSystem;
 }
 

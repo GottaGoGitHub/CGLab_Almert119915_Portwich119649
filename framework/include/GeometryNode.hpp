@@ -26,11 +26,15 @@ public:
 
     void setModelObject(model_object const &modelObject);
 
+    float getSpeed() const;
+
+    void setSpeed(float speed);
 
 private:
     // Member
     model geometry_;
     model_object modelObject_;
+    float speed_;
 };
 
 

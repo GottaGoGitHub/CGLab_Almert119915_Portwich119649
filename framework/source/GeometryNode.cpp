@@ -26,3 +26,11 @@ model_object GeometryNode::getModelObject() const {
 void GeometryNode::setModelObject(const model_object &modelObject) {
     modelObject_ = modelObject;
 }
+
+float GeometryNode::getSpeed() const {
+    return speed_;
+}
+
+void GeometryNode::setSpeed(float speed) {
+    speed_ = speed;
+}
