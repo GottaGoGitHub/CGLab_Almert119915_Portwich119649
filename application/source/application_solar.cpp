@@ -44,9 +44,12 @@ void ApplicationSolar::render() const {
     glUseProgram(m_shaders.at("planet").handle);
     SceneGraph solarSystem = initializeSolarSystem();
     auto children = solarSystem.getRoot()->getChildrenList();
+    // Adding moons to solarSystem
     children.push_back(solarSystem.getRoot()->getChildren("moon"));
 
+    // iteration through all planets and moons
     for (auto child: children) {
+        // If it's a normal planet
         if (child->getName() != "moon"){
             child->setWorldTransform(glm::rotate(glm::fmat4{}, float(glfwGetTime() * child->getSpeed()),
                                        glm::fvec3{0.0f, 1.0f, 0.0f}));
@@ -59,7 +62,7 @@ void ApplicationSolar::render() const {
             glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
                                1, GL_FALSE, glm::value_ptr(child->getLocalTransform()));
         } else{
-            // parent of moon -> earth
+            // a moon will be processed after their parent. Therefore, is the transformed position of the parent known.
             auto parent = child->getParent();
             child->setWorldTransform(glm::rotate(parent->getWorldTransform(), float(glfwGetTime() * child->getSpeed()),
                                             glm::fvec3{0.0f, 1.0f, 0.0f}));
@@ -206,7 +209,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
     root->addChildren(sun_holder);
     sun_holder->setDistance(0.0f);
-    sun_holder->setSize(2.0f);
+    sun_holder->setSize(5.0f);
     sun_holder->addChildren(geo_sun);
 
     // merkur
