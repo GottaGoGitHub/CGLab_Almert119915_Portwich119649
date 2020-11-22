@@ -58,7 +58,6 @@ void ApplicationSolar::render() const {
             child->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * child->getWorldTransform()));
             glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
                                1, GL_FALSE, glm::value_ptr(child->getLocalTransform()));
-
         } else{
             // parent of moon -> earth
             auto parent = child->getParent();
@@ -66,7 +65,6 @@ void ApplicationSolar::render() const {
                                             glm::fvec3{0.0f, 1.0f, 0.0f}));
             child->setWorldTransform(glm::translate(child->getWorldTransform(), glm::fvec3{0.0f, 0.0f, child->getDistance()}));
             child->setWorldTransform(glm::scale(child->getWorldTransform(), glm::vec3(child->getSize(), child->getSize(), child->getSize())));
-
             glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
                                1, GL_FALSE, glm::value_ptr(child->getWorldTransform()));
             child->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * child->getWorldTransform()));
@@ -260,16 +258,16 @@ void ApplicationSolar::initializeGeometry() {
 // handle key input
 void ApplicationSolar::keyCallback(int key, int action, int mods) {
     if (key == GLFW_KEY_W && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-        m_view_transform = glm::translate(m_view_transform, glm::fvec3{0.0f, 0.0f, -0.1f});
+        m_view_transform = glm::translate(m_view_transform, glm::fvec3{0.0f, 0.0f, -1.0f});
         uploadView();
     } else if (key == GLFW_KEY_S && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-        m_view_transform = glm::translate(m_view_transform, glm::fvec3{0.0f, 0.0f, 0.1f});
+        m_view_transform = glm::translate(m_view_transform, glm::fvec3{0.0f, 0.0f, 1.0f});
         uploadView();
     } else if (key == GLFW_KEY_A && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-        m_view_transform = glm::translate(m_view_transform, glm::fvec3{-0.1f, 0.0f, 0.0f});
+        m_view_transform = glm::translate(m_view_transform, glm::fvec3{-1.0f, 0.0f, 0.0f});
         uploadView();
     } else if (key == GLFW_KEY_D && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
-        m_view_transform = glm::translate(m_view_transform, glm::fvec3{0.1f, 0.0f, 0.0f});
+        m_view_transform = glm::translate(m_view_transform, glm::fvec3{1.0f, 0.0f, 0.0f});
         uploadView();
     } else if (key == GLFW_KEY_SPACE && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
         m_view_transform = glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f});
