@@ -115,15 +115,15 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
     root->addChildren(sun_holder);
     sun_holder->setDistance(0.0f);
-    sun_holder->setSize(2.5f);
+    sun_holder->setSize(7.0f);
     sun_holder->addChildren(geo_sun);
 
     // merkur
     std::shared_ptr<Node> merkur_holder = std::make_shared<Node>("merkur", root);
     std::shared_ptr<GeometryNode> geo_merkur = std::make_shared<GeometryNode>(merkur_holder, "geo_merkur");
     merkur_holder->setSpeed(4.147f);
-    merkur_holder->setDistance(4.0f);
-    merkur_holder->setSize(0.40f);
+    merkur_holder->setDistance(5.0f + sun_holder->getSize());
+    merkur_holder->setSize(0.38f);
     root->addChildren(merkur_holder);
     merkur_holder->addChildren(geo_merkur);
 
@@ -131,8 +131,8 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> venus_holder = std::make_shared<Node>("venus", root);
     std::shared_ptr<GeometryNode> geo_venus = std::make_shared<GeometryNode>(merkur_holder, "geo_venus");
     venus_holder->setSpeed(2.624f);
-    venus_holder->setDistance(7.0f);
-    venus_holder->setSize(0.9f);
+    venus_holder->setDistance(9.31f+ sun_holder->getSize());
+    venus_holder->setSize(0.94f);
     root->addChildren(venus_holder);
     venus_holder->addChildren(geo_venus);
 
@@ -140,16 +140,17 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> earth_holder = std::make_shared<Node>("earth", root);
     std::shared_ptr<GeometryNode> geo_earth = std::make_shared<GeometryNode>(earth_holder, "geo_earth");
     earth_holder->setSpeed(1.0f);
-    earth_holder->setDistance(11.0f);
+    earth_holder->setDistance(12.93f+ sun_holder->getSize());
     earth_holder->setSize(1.0f);
     root->addChildren(earth_holder);
     earth_holder->addChildren(geo_earth);
+
     // moon
     std::shared_ptr<Node> moon_holder = std::make_shared<Node>("moon", earth_holder);
     std::shared_ptr<GeometryNode> geo_moon = std::make_shared<GeometryNode>(earth_holder, "geo_moon");
     moon_holder->setSpeed(0.5f);
-    moon_holder->setDistance(2.0f);
-    moon_holder->setSize(0.5f);
+    moon_holder->setDistance(0.4f+ earth_holder->getSize());
+    moon_holder->setSize(0.27f);
     earth_holder->addChildren(moon_holder);
     moon_holder->addChildren(geo_moon);
 
@@ -157,8 +158,8 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> mars_holder = std::make_shared<Node>("mars", root);
     std::shared_ptr<GeometryNode> geo_mars = std::make_shared<GeometryNode>(mars_holder, "geo_mars");
     mars_holder->setSpeed(0.831f);
-    mars_holder->setDistance(14.5f);
-    mars_holder->setSize(0.5f);
+    mars_holder->setDistance(19.65f+ sun_holder->getSize());
+    mars_holder->setSize(0.53f);
     root->addChildren(mars_holder);
     mars_holder->addChildren(geo_mars);
 
@@ -166,8 +167,8 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> jupiter_holder = std::make_shared<Node>("jupiter", root);
     std::shared_ptr<GeometryNode> geo_jupiter = std::make_shared<GeometryNode>(jupiter_holder, "geo_jupiter");
     jupiter_holder->setSpeed(0.943f);
-    jupiter_holder->setDistance(18.0f);
-    jupiter_holder->setSize(1.20f);
+    jupiter_holder->setDistance(30.0f+ sun_holder->getSize()); //67.068
+    jupiter_holder->setSize(4.0f);
     root->addChildren(jupiter_holder);
     jupiter_holder->addChildren(geo_jupiter);
 
@@ -175,8 +176,8 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> saturn_holder = std::make_shared<Node>("saturn", root);
     std::shared_ptr<GeometryNode> geo_saturn = std::make_shared<GeometryNode>(saturn_holder, "geo_saturn");
     saturn_holder->setSpeed(0.74f);
-    saturn_holder->setDistance(22.0f);
-    saturn_holder->setSize(1.350f);
+    saturn_holder->setDistance(38.0f+ sun_holder->getSize()); // 123.017
+    saturn_holder->setSize(3.0f);
     root->addChildren(saturn_holder);
     saturn_holder->addChildren(geo_saturn);
 
@@ -184,8 +185,8 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> uranus_holder = std::make_shared<Node>("uranus", root);
     std::shared_ptr<GeometryNode> geo_uranus = std::make_shared<GeometryNode>(uranus_holder, "geo_uranus");
     uranus_holder->setSpeed(0.65f);
-    uranus_holder->setDistance(25.0f);
-    uranus_holder->setSize(1.1f);
+    uranus_holder->setDistance(50.0f+ sun_holder->getSize()); //248.620
+    uranus_holder->setSize(2.0f);
     root->addChildren(uranus_holder);
     uranus_holder->addChildren(geo_uranus);
 
@@ -193,10 +194,102 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> neptun_holder = std::make_shared<Node>("neptun", root);
     std::shared_ptr<GeometryNode> geo_neptun = std::make_shared<GeometryNode>(saturn_holder, "geo_neptun");
     neptun_holder->setSpeed(0.607f);
-    neptun_holder->setDistance(35.0f);
-    neptun_holder->setSize(1.05f);
+    neptun_holder->setDistance(60.0f+ sun_holder->getSize()); //388.706
+    neptun_holder->setSize(2.0f);
     root->addChildren(neptun_holder);
     neptun_holder->addChildren(geo_neptun);
+
+
+/*  // Size and Distance in relation to sun size
+    // sun
+    std::shared_ptr<Node> sun_holder = std::make_shared<Node>("sun", root);
+    std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
+    root->addChildren(sun_holder);
+    sun_holder->setDistance(0.0f);
+    sun_holder->setSize(2.0f);
+    sun_holder->addChildren(geo_sun);
+
+    // merkur
+    std::shared_ptr<Node> merkur_holder = std::make_shared<Node>("merkur", root);
+    std::shared_ptr<GeometryNode> geo_merkur = std::make_shared<GeometryNode>(merkur_holder, "geo_merkur");
+    merkur_holder->setSpeed(4.147f);
+    merkur_holder->setDistance(41.645f * sun_holder->getSize() + sun_holder->getSize());
+    merkur_holder->setSize(3.50e-3f * sun_holder->getSize());
+    root->addChildren(merkur_holder);
+    merkur_holder->addChildren(geo_merkur);
+
+    // venus
+    std::shared_ptr<Node> venus_holder = std::make_shared<Node>("venus", root);
+    std::shared_ptr<GeometryNode> geo_venus = std::make_shared<GeometryNode>(merkur_holder, "geo_venus");
+    venus_holder->setSpeed(2.624f);
+    venus_holder->setDistance(77.547f * sun_holder->getSize() + sun_holder->getSize());
+    venus_holder->setSize(8.69e-3f * sun_holder->getSize());
+    root->addChildren(venus_holder);
+    venus_holder->addChildren(geo_venus);
+
+    // earth planet
+    std::shared_ptr<Node> earth_holder = std::make_shared<Node>("earth", root);
+    std::shared_ptr<GeometryNode> geo_earth = std::make_shared<GeometryNode>(earth_holder, "geo_earth");
+    earth_holder->setSpeed(1.0f);
+    earth_holder->setDistance(107.704f * sun_holder->getSize() + sun_holder->getSize());
+    earth_holder->setSize(8.69e-3f * sun_holder->getSize());
+    root->addChildren(earth_holder);
+    earth_holder->addChildren(geo_earth);
+
+    // moon
+    std::shared_ptr<Node> moon_holder = std::make_shared<Node>("moon", earth_holder);
+    std::shared_ptr<GeometryNode> geo_moon = std::make_shared<GeometryNode>(earth_holder, "geo_moon");
+    moon_holder->setSpeed(0.5f);
+    moon_holder->setDistance(3.02e3f * earth_holder->getSize() + earth_holder->getSize());
+    moon_holder->setSize(2.73e-1f * earth_holder->getSize());
+    earth_holder->addChildren(moon_holder);
+    moon_holder->addChildren(geo_moon);
+
+    // mars
+    std::shared_ptr<Node> mars_holder = std::make_shared<Node>("mars", root);
+    std::shared_ptr<GeometryNode> geo_mars = std::make_shared<GeometryNode>(mars_holder, "geo_mars");
+    mars_holder->setSpeed(0.831f);
+    mars_holder->setDistance(163.71f * sun_holder->getSize() + sun_holder->getSize());
+    mars_holder->setSize(4.87e-3f * sun_holder->getSize());
+    root->addChildren(mars_holder);
+    mars_holder->addChildren(geo_mars);
+
+    // jupiter
+    std::shared_ptr<Node> jupiter_holder = std::make_shared<Node>("jupiter", root);
+    std::shared_ptr<GeometryNode> geo_jupiter = std::make_shared<GeometryNode>(jupiter_holder, "geo_jupiter");
+    jupiter_holder->setSpeed(0.943f);
+    jupiter_holder->setDistance(558.627f * sun_holder->getSize() + sun_holder->getSize()); //67.068
+    jupiter_holder->setSize(1e-1f * sun_holder->getSize());
+    root->addChildren(jupiter_holder);
+    jupiter_holder->addChildren(geo_jupiter);
+
+    // saturn
+    std::shared_ptr<Node> saturn_holder = std::make_shared<Node>("saturn", root);
+    std::shared_ptr<GeometryNode> geo_saturn = std::make_shared<GeometryNode>(saturn_holder, "geo_saturn");
+    saturn_holder->setSpeed(0.74f);
+    saturn_holder->setDistance(1024.628f * sun_holder->getSize() + sun_holder->getSize()); // 123.017
+    saturn_holder->setSize(8.36e-2f * sun_holder->getSize());
+    root->addChildren(saturn_holder);
+    saturn_holder->addChildren(geo_saturn);
+
+    // uranus
+    std::shared_ptr<Node> uranus_holder = std::make_shared<Node>("uranus", root);
+    std::shared_ptr<GeometryNode> geo_uranus = std::make_shared<GeometryNode>(uranus_holder, "geo_uranus");
+    uranus_holder->setSpeed(0.65f);
+    uranus_holder->setDistance(2070.797f * sun_holder->getSize() + sun_holder->getSize()); //248.620
+    uranus_holder->setSize(3.64e-2f * sun_holder->getSize());
+    root->addChildren(uranus_holder);
+    uranus_holder->addChildren(geo_uranus);
+
+    // neptun
+    std::shared_ptr<Node> neptun_holder = std::make_shared<Node>("neptun", root);
+    std::shared_ptr<GeometryNode> geo_neptun = std::make_shared<GeometryNode>(saturn_holder, "geo_neptun");
+    neptun_holder->setSpeed(0.607f);
+    neptun_holder->setDistance(3237.596f * sun_holder->getSize() + sun_holder->getSize()); //388.706
+    neptun_holder->setSize(3.53e-2f * sun_holder->getSize());
+    root->addChildren(neptun_holder);
+    neptun_holder->addChildren(geo_neptun);
+    */
 
     return solarSystem;
 }
