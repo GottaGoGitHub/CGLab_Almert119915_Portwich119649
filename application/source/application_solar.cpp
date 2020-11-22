@@ -44,28 +44,41 @@ void ApplicationSolar::render() const {
     glUseProgram(m_shaders.at("planet").handle);
     SceneGraph solarSystem = initializeSolarSystem();
     auto children = solarSystem.getRoot()->getChildrenList();
+    children.push_back(solarSystem.getRoot()->getChildren("moon"));
 
     for (auto child: children) {
+        if (child->getName() != "moon"){
+            child->setWorldTransform(glm::rotate(glm::fmat4{}, float(glfwGetTime() * child->getSpeed()),
+                                       glm::fvec3{0.0f, 1.0f, 0.0f}));
+            child->setWorldTransform(glm::translate(child->getWorldTransform(), glm::fvec3{0.0f, 0.0f, child->getDistance()}));
+            child->setWorldTransform(glm::scale(child->getWorldTransform(), glm::vec3(child->getSize(), child->getSize(), child->getSize())));
+            glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
+                               1, GL_FALSE, glm::value_ptr(child->getWorldTransform()));
+            // extra matrix for normal transformation to keep them orthogonal to surface
+            child->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * child->getWorldTransform()));
+            glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
+                               1, GL_FALSE, glm::value_ptr(child->getLocalTransform()));
 
-        glm::mat4 model_matrix = child->getWorldTransform();
-        model_matrix = glm::rotate(glm::fmat4{}, float(glfwGetTime() * child->getSpeed()),
-                                   glm::fvec3{0.0f, 1.0f, 0.0f});
-        model_matrix = glm::translate(model_matrix, glm::fvec3{0.0f, 0.0f, child->getDistance() * 2});
-        model_matrix = glm::scale(model_matrix, glm::vec3(child->getSize(), child->getSize(), child->getSize()));
-        glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
-                           1, GL_FALSE, glm::value_ptr(model_matrix));
-        //child->setWorldTransform(model_matrix);
-        // extra matrix for normal transformation to keep them orthogonal to surface
-        glm::mat4x4 normal_matrix = glm::inverseTranspose(glm::inverse(m_view_transform) * model_matrix);
-        glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
-                           1, GL_FALSE, glm::value_ptr(normal_matrix));
-        //child->setLocalTransform(normal_matrix);
+        } else{
+            // parent of moon -> earth
+            auto parent = child->getParent();
+            child->setWorldTransform(glm::rotate(parent->getWorldTransform(), float(glfwGetTime() * parent->getSpeed()),
+                                            glm::fvec3{0.0f, 1.0f, 0.0f}));
+            child->setWorldTransform(glm::translate(child->getWorldTransform(), glm::fvec3{0.0f, 0.0f, parent->getDistance()}));
 
-        auto moon = child->getChildren("moon");
-        if(moon != nullptr){
+            child->setWorldTransform(glm::rotate(child->getWorldTransform(), float(glfwGetTime() * child->getSpeed()),
+                                            glm::fvec3{0.0f, 1.0f, 0.0f}));
+            child->setWorldTransform(glm::translate(child->getWorldTransform(), glm::fvec3{0.0f, 0.0f, child->getDistance()}));
+            child->setWorldTransform(glm::scale(child->getWorldTransform(), glm::vec3(child->getSize(), child->getSize(), child->getSize())));
 
-
+            glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
+                               1, GL_FALSE, glm::value_ptr(child->getWorldTransform()));
+            child->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * child->getWorldTransform()));
+            glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
+                               1, GL_FALSE, glm::value_ptr(child->getLocalTransform()));
         }
+
+
         // bind the VAO to draw
         glBindVertexArray(planet_object.vertex_AO);
 
@@ -103,14 +116,14 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> root = std::make_shared<Node>("root");
     SceneGraph solarSystem = SceneGraph("solarSystem", root);
 
-//    // sun
-//    std::shared_ptr<Node> sun_holder = std::make_shared<Node>("sun", root);
-//    std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
-//    root->addChildren(sun_holder);
-//    sun_holder->setDistance(0.0f);
-//    sun_holder->setSize(3.0f);
-//    sun_holder->addChildren(geo_sun);
-//
+    // sun
+    std::shared_ptr<Node> sun_holder = std::make_shared<Node>("sun", root);
+    std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
+    root->addChildren(sun_holder);
+    sun_holder->setDistance(0.0f);
+    sun_holder->setSize(0.10f);
+    sun_holder->addChildren(geo_sun);
+
 //    // merkur
 //    std::shared_ptr<Node> merkur_holder = std::make_shared<Node>("merkur", root);
 //    std::shared_ptr<GeometryNode> geo_merkur = std::make_shared<GeometryNode>(merkur_holder, "geo_merkur");
@@ -141,7 +154,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> moon_holder = std::make_shared<Node>("moon", root);
     std::shared_ptr<GeometryNode> geo_moon = std::make_shared<GeometryNode>(earth_holder, "geo_moon");
     moon_holder->setSpeed(0.5f);
-    moon_holder->setDistance(1.0f);
+    moon_holder->setDistance(2.0f);
     moon_holder->setSize(0.5f);
     earth_holder->addChildren(moon_holder);
     moon_holder->addChildren(geo_moon);
