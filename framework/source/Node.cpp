@@ -33,6 +33,7 @@ Node::~Node() = default;
 
 //setter
 
+// set parent and refresh depth and path
 void Node::setParent(const std::shared_ptr<Node> &parent) {
     parent_ = parent;
     depth_ = parent_->getDepth() + 1;
@@ -105,6 +106,7 @@ float Node::getSize() const {
     return size_;
 }
 
+// search recursively trough all child for a child with given name and return it
 std::shared_ptr<Node> Node::getChildren(std::string const &name) {
     // iterate over childrenList
     for (auto child : children_) {

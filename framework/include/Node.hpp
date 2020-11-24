@@ -16,9 +16,9 @@ private:
     glm::mat4 worldTransform_;
     std::shared_ptr<Node> parent_;
     std::list<std::shared_ptr<Node>> children_;
-    float speed_;
-    float distance_;
-    float size_;
+    float speed_; // roatation speed
+    float distance_; // distance from sun
+    float size_;    // global scaling factor
 
 
 public:
@@ -38,14 +38,19 @@ public:
     // set parent and update depth & path
     void setParent(std::shared_ptr<Node> const &parent);
 
+    // search if there is a child with the name and return it
     std::shared_ptr<Node> getChildren(std::string const &name);
 
+    // remove child with name
     std::shared_ptr<Node> removeChildren(std::string const &name);
 
+    // return list of children
     std::list<std::shared_ptr<Node>> getChildrenList();
 
+    // add a child
     void addChildren(std::shared_ptr<Node> const &node);
 
+    // print all children (used by the print function of the scenegraph)
     void printChildren(int level = 0);
 
     // return name
