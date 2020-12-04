@@ -1,5 +1,5 @@
-# include <Node.hpp>
-#include <Color.hpp>
+# include "Node.hpp"
+#include "Color.hpp"
 #ifndef OPENGL_FRAMEWORK_POINTLIGHTNODE_HPP
 #define OPENGL_FRAMEWORK_POINTLIGHTNODE_HPP
 class PointLightNode: public Node{
