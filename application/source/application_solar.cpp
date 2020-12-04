@@ -25,11 +25,12 @@ using namespace gl;
 #include <GeometryNode.hpp>
 
 ApplicationSolar::ApplicationSolar(std::string const &resource_path)
-        : Application{resource_path}, planet_object{},
+        : Application{resource_path}, planet_object{}, star_object{},
           m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})},
           m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)} {
     initializeGeometry();
     initializeShaderPrograms();
+    initializeStarsGeometry();
 }
 
 ApplicationSolar::~ApplicationSolar() {
@@ -42,6 +43,8 @@ void ApplicationSolar::render() const {
 
     // bind shader to upload uniforms
     glUseProgram(m_shaders.at("planet").handle);
+    glClearColor(0.1f,0.1f,0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     SceneGraph solarSystem = initializeSolarSystem();
     auto children = solarSystem.getRoot()->getChildrenList();
     // Adding moons to solarSystem
@@ -50,49 +53,77 @@ void ApplicationSolar::render() const {
     // iteration through all planets and moons
     for (auto child: children) {
         // If it's a normal planet
-        if (child->getName() != "moon"){
+        if (child->getName() != "moon") {
             child->setWorldTransform(glm::rotate(glm::fmat4{}, float(glfwGetTime() * child->getSpeed()),
-                                       glm::fvec3{0.0f, 1.0f, 0.0f}));
-            child->setWorldTransform(glm::translate(child->getWorldTransform(), glm::fvec3{0.0f, 0.0f, child->getDistance()}));
-            child->setWorldTransform(glm::scale(child->getWorldTransform(), glm::vec3(child->getSize(), child->getSize(), child->getSize())));
+                                                 glm::fvec3{0.0f, 1.0f, 0.0f}));
+            child->setWorldTransform(
+                    glm::translate(child->getWorldTransform(), glm::fvec3{0.0f, 0.0f, child->getDistance()}));
+            child->setWorldTransform(glm::scale(child->getWorldTransform(),
+                                                glm::vec3(child->getSize(), child->getSize(), child->getSize())));
             glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
                                1, GL_FALSE, glm::value_ptr(child->getWorldTransform()));
             // extra matrix for normal transformation to keep them orthogonal to surface
-            child->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * child->getWorldTransform()));
+            child->setLocalTransform(
+                    glm::inverseTranspose(glm::inverse(m_view_transform) * child->getWorldTransform()));
             glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
                                1, GL_FALSE, glm::value_ptr(child->getLocalTransform()));
-        } else{
+        } else {
             // a moon will be processed after their parent. Therefore, is the transformed position of the parent known.
             auto parent = child->getParent();
             child->setWorldTransform(glm::rotate(parent->getWorldTransform(), float(glfwGetTime() * child->getSpeed()),
-                                            glm::fvec3{0.0f, 1.0f, 0.0f}));
-            child->setWorldTransform(glm::translate(child->getWorldTransform(), glm::fvec3{0.0f, 0.0f, child->getDistance()}));
-            child->setWorldTransform(glm::scale(child->getWorldTransform(), glm::vec3(child->getSize(), child->getSize(), child->getSize())));
+                                                 glm::fvec3{0.0f, 1.0f, 0.0f}));
+            child->setWorldTransform(
+                    glm::translate(child->getWorldTransform(), glm::fvec3{0.0f, 0.0f, child->getDistance()}));
+            child->setWorldTransform(glm::scale(child->getWorldTransform(),
+                                                glm::vec3(child->getSize(), child->getSize(), child->getSize())));
             glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
                                1, GL_FALSE, glm::value_ptr(child->getWorldTransform()));
-            child->setLocalTransform(glm::inverseTranspose(glm::inverse(m_view_transform) * child->getWorldTransform()));
+            child->setLocalTransform(
+                    glm::inverseTranspose(glm::inverse(m_view_transform) * child->getWorldTransform()));
             glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
                                1, GL_FALSE, glm::value_ptr(child->getLocalTransform()));
         }
-
-
         // bind the VAO to draw
         glBindVertexArray(planet_object.vertex_AO);
 
         // draw bound vertex array using bound shader
         glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
     }
+
+    glUseProgram(m_shaders.at("star").handle);
+    // bind the VAO to draw
+    glBindVertexArray(star_object.vertex_AO);
+    // draw bound vertex array using bound shader
+    glDrawArrays(star_object.draw_mode, GLint(0), star_object.num_elements);
+
+
 }
 
 void ApplicationSolar::uploadView() {
     // vertices are transformed in camera space, so camera transform must be inverted
     glm::fmat4 view_matrix = glm::inverse(m_view_transform);
+
+    glUseProgram(m_shaders.at("star").handle);
+
+    glUniformMatrix4fv(m_shaders.at("star").u_locs.at("ModelViewMatrix"),
+                       1, GL_FALSE, glm::value_ptr(view_matrix));
+
+    glUseProgram(m_shaders.at("planet").handle);
     // upload matrix to gpu
     glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ViewMatrix"),
                        1, GL_FALSE, glm::value_ptr(view_matrix));
 }
 
 void ApplicationSolar::uploadProjection() {
+    // bind shader to which to upload unforms
+    glUseProgram(m_shaders.at("star").handle);
+
+    // upload matrix to gpu
+    glUniformMatrix4fv(m_shaders.at("star").u_locs.at("ProjectionMatrix"),
+                       1, GL_FALSE, glm::value_ptr(m_view_projection));
+
+    glUseProgram(m_shaders.at("planet").handle);
+
     // upload matrix to gpu
     glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ProjectionMatrix"),
                        1, GL_FALSE, glm::value_ptr(m_view_projection));
@@ -112,6 +143,9 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     // scenegraph with root
     std::shared_ptr<Node> root = std::make_shared<Node>("root");
     SceneGraph solarSystem = SceneGraph("solarSystem", root);
+
+//    std::shared_ptr<Node> stars_container = std::make_shared<Node>("stars_container", root);
+//    root->addChildren(stars_container);
 
     // sun
     std::shared_ptr<Node> sun_holder = std::make_shared<Node>("sun", root);
@@ -134,7 +168,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> venus_holder = std::make_shared<Node>("venus", root);
     std::shared_ptr<GeometryNode> geo_venus = std::make_shared<GeometryNode>(merkur_holder, "geo_venus");
     venus_holder->setSpeed(2.624f);
-    venus_holder->setDistance(9.31f+ sun_holder->getSize());
+    venus_holder->setDistance(9.31f + sun_holder->getSize());
     venus_holder->setSize(0.94f);
     root->addChildren(venus_holder);
     venus_holder->addChildren(geo_venus);
@@ -143,7 +177,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> earth_holder = std::make_shared<Node>("earth", root);
     std::shared_ptr<GeometryNode> geo_earth = std::make_shared<GeometryNode>(earth_holder, "geo_earth");
     earth_holder->setSpeed(1.0f);
-    earth_holder->setDistance(12.93f+ sun_holder->getSize());
+    earth_holder->setDistance(12.93f + sun_holder->getSize());
     earth_holder->setSize(1.0f);
     root->addChildren(earth_holder);
     earth_holder->addChildren(geo_earth);
@@ -152,7 +186,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> moon_holder = std::make_shared<Node>("moon", earth_holder);
     std::shared_ptr<GeometryNode> geo_moon = std::make_shared<GeometryNode>(earth_holder, "geo_moon");
     moon_holder->setSpeed(0.5f);
-    moon_holder->setDistance(0.4f+ earth_holder->getSize());
+    moon_holder->setDistance(0.4f + earth_holder->getSize());
     moon_holder->setSize(0.27f);
     earth_holder->addChildren(moon_holder);
     moon_holder->addChildren(geo_moon);
@@ -161,7 +195,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> mars_holder = std::make_shared<Node>("mars", root);
     std::shared_ptr<GeometryNode> geo_mars = std::make_shared<GeometryNode>(mars_holder, "geo_mars");
     mars_holder->setSpeed(0.831f);
-    mars_holder->setDistance(19.65f+ sun_holder->getSize());
+    mars_holder->setDistance(19.65f + sun_holder->getSize());
     mars_holder->setSize(0.53f);
     root->addChildren(mars_holder);
     mars_holder->addChildren(geo_mars);
@@ -170,7 +204,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> jupiter_holder = std::make_shared<Node>("jupiter", root);
     std::shared_ptr<GeometryNode> geo_jupiter = std::make_shared<GeometryNode>(jupiter_holder, "geo_jupiter");
     jupiter_holder->setSpeed(0.943f);
-    jupiter_holder->setDistance(30.0f+ sun_holder->getSize()); //67.068
+    jupiter_holder->setDistance(30.0f + sun_holder->getSize()); //67.068
     jupiter_holder->setSize(4.0f);
     root->addChildren(jupiter_holder);
     jupiter_holder->addChildren(geo_jupiter);
@@ -179,7 +213,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> saturn_holder = std::make_shared<Node>("saturn", root);
     std::shared_ptr<GeometryNode> geo_saturn = std::make_shared<GeometryNode>(saturn_holder, "geo_saturn");
     saturn_holder->setSpeed(0.74f);
-    saturn_holder->setDistance(38.0f+ sun_holder->getSize()); // 123.017
+    saturn_holder->setDistance(38.0f + sun_holder->getSize()); // 123.017
     saturn_holder->setSize(3.0f);
     root->addChildren(saturn_holder);
     saturn_holder->addChildren(geo_saturn);
@@ -188,7 +222,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> uranus_holder = std::make_shared<Node>("uranus", root);
     std::shared_ptr<GeometryNode> geo_uranus = std::make_shared<GeometryNode>(uranus_holder, "geo_uranus");
     uranus_holder->setSpeed(0.65f);
-    uranus_holder->setDistance(50.0f+ sun_holder->getSize()); //248.620
+    uranus_holder->setDistance(50.0f + sun_holder->getSize()); //248.620
     uranus_holder->setSize(2.0f);
     root->addChildren(uranus_holder);
     uranus_holder->addChildren(geo_uranus);
@@ -197,7 +231,7 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     std::shared_ptr<Node> neptun_holder = std::make_shared<Node>("neptun", root);
     std::shared_ptr<GeometryNode> geo_neptun = std::make_shared<GeometryNode>(saturn_holder, "geo_neptun");
     neptun_holder->setSpeed(0.607f);
-    neptun_holder->setDistance(60.0f+ sun_holder->getSize()); //388.706
+    neptun_holder->setDistance(60.0f + sun_holder->getSize()); //388.706
     neptun_holder->setSize(2.0f);
     root->addChildren(neptun_holder);
     neptun_holder->addChildren(geo_neptun);
@@ -215,6 +249,54 @@ void ApplicationSolar::initializeShaderPrograms() {
     m_shaders.at("planet").u_locs["ModelMatrix"] = -1;
     m_shaders.at("planet").u_locs["ViewMatrix"] = -1;
     m_shaders.at("planet").u_locs["ProjectionMatrix"] = -1;
+
+    m_shaders.emplace("star", shader_program{{{GL_VERTEX_SHADER,m_resource_path + "shaders/vao.vert"},
+                                                      {GL_FRAGMENT_SHADER, m_resource_path + "shaders/vao.frag"}}});
+
+    // request uniform locations for shader program
+    m_shaders.at("star").u_locs["ModelViewMatrix"] = -1;
+    m_shaders.at("star").u_locs["ProjectionMatrix"] = -1;
+}
+
+void ApplicationSolar::initializeStarsGeometry() {
+    int const numberStars = 5000;
+    std::vector<GLfloat> stars; //= std::vector<GLfloat>(6 * numberStars * sizeof(float));
+    stars.reserve(6*numberStars* sizeof(float));
+    std::cout << stars.size();
+
+    for (int i = 0; i < numberStars; i++) {
+        float rand_x = static_cast<float>(std::rand() % 100) - 50.0f;
+        stars.push_back(rand_x);
+        float rand_y = static_cast<float>(std::rand() % 100) - 50.0f;
+        stars.push_back(rand_y);
+        float rand_z = static_cast<float>(std::rand() % 100) - 50.0f;
+        stars.push_back(rand_z);
+        float rand_r = static_cast<float>(std::rand() % 255) / 255.0f;
+        stars.push_back(rand_r);
+        float rand_g = static_cast<float>(std::rand() % 255) / 255.0f;
+        stars.push_back(rand_g);
+        float rand_b = static_cast<float>(std::rand() % 255) / 255.0f;
+        stars.push_back(rand_b);
+    }
+
+    glGenVertexArrays(1, &star_object.vertex_AO);
+    glBindVertexArray(star_object.vertex_AO);
+
+    glGenBuffers(1, &star_object.vertex_BO);
+    glBindBuffer(GL_ARRAY_BUFFER, star_object.vertex_BO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float)*stars.size(), stars.data(), GL_STATIC_DRAW);
+
+    // first attribArray for positions
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3,GL_FLOAT, GL_FALSE, GLsizei(6*sizeof(float)),0);
+
+    // second attribArray for colors
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 3,GL_FLOAT, GL_FALSE, GLsizei(6*sizeof(float)),(void*)(sizeof(float)*3));
+    //the index of the vertexattribarray corresponds to layout position
+
+    star_object.draw_mode = GL_POINTS;
+    star_object.num_elements = GLsizei(numberStars);
 }
 
 // load models

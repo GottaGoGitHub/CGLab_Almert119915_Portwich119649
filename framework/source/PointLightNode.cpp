@@ -3,12 +3,12 @@
 PointLightNode::PointLightNode(std::string name, std::shared_ptr<Node> parent):
     Node(std::move(name), parent){}
 
-PointLightNode::PointLightNode(std::string name, std::shared_ptr<Node> parent, color color, float lightIntensity):
+PointLightNode::PointLightNode(std::string name, std::shared_ptr<Node> parent, Color color, float lightIntensity):
     Node(std::move(name), parent),
     color_{color},
     lightIntensity_{lightIntensity}{}
 
-color PointLightNode::getColor() {
+Color PointLightNode::getColor() {
     return color_;
 }
 
@@ -16,7 +16,7 @@ float PointLightNode::getLightIntensity() {
     return lightIntensity_;
 }
 
-void PointLightNode::setColor(color color) {
+void PointLightNode::setColor(Color color) {
     color_ = color;
 }
 
