@@ -37,6 +37,8 @@ protected:
 
     void initializeStarsGeometry();
 
+    void initializeOrbits();
+
     // update uniform values
     void uploadUniforms();
 

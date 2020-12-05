@@ -4,6 +4,7 @@
 #include <string>
 #include <list>
 #include <memory>
+#include <vector>
 #include "glm/glm.hpp"
 
 class Node {
@@ -46,6 +47,9 @@ public:
 
     // return list of children
     std::list<std::shared_ptr<Node>> getChildrenList();
+
+    //return all drawable children
+    std::vector<std::shared_ptr<Node>> getDrawable();
 
     // add a child
     void addChildren(std::shared_ptr<Node> const &node);

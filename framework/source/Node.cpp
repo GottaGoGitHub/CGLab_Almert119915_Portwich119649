@@ -2,6 +2,8 @@
 
 #include <utility>
 #include <iostream>
+#include <vector>
+#include <glm/gtc/matrix_transform.hpp>
 
 Node::Node() {}
 
@@ -69,6 +71,7 @@ std::shared_ptr<Node> Node::removeChildren(const std::string &name) {
 
 void Node::setDistance(float distance) {
     distance_ = distance;
+    localTransform_ = glm::translate(localTransform_, glm::fvec3{0.0f, 0.0f, distance});
 }
 
 void Node::setSpeed(float speed) {
@@ -122,6 +125,21 @@ std::shared_ptr<Node> Node::getChildren(std::string const &name) {
     }
     // nothing found :(
     return nullptr;
+}
+
+std::vector<std::shared_ptr<Node>> Node::getDrawable() {
+    std::vector<std::shared_ptr<Node>> drawable;
+    for(auto child : children_){
+        if(child->name_.find("camera") == std::string::npos && child->name_.find("geo") == std::string::npos){
+            drawable.push_back(child);
+            if(not child->getChildrenList().empty()){
+                auto child_drawable = child->getDrawable();
+                drawable.insert(drawable.end(), child_drawable.begin(), child_drawable.end());
+            }
+
+        }
+    }
+    return drawable;
 }
 
 std::string Node::getName() {
