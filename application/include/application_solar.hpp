@@ -29,7 +29,7 @@ public:
 
 protected:
 
-    SceneGraph initializeSolarSystem() const;
+    void initializeSolarSystem();
 
     void initializeShaderPrograms();
 
@@ -45,6 +45,9 @@ protected:
 
     // upload view matrix
     void uploadView();
+
+    // scenegraph
+    SceneGraph solar_system_;
 
     // cpu representation of model
     model_object planet_object;

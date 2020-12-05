@@ -27,9 +27,11 @@ using namespace gl;
 ApplicationSolar::ApplicationSolar(std::string const &resource_path)
         : Application{resource_path}, planet_object{}, star_object{},
           m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})},
-          m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)} {
+          m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)},
+          solar_system_{}{
     initializeGeometry();
     initializeShaderPrograms();
+    initializeSolarSystem();
     initializeStarsGeometry();
 }
 
@@ -45,10 +47,9 @@ void ApplicationSolar::render() const {
     glUseProgram(m_shaders.at("planet").handle);
     glClearColor(0.1f,0.1f,0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    SceneGraph solarSystem = initializeSolarSystem();
-    auto children = solarSystem.getRoot()->getChildrenList();
+    auto children = solar_system_.getRoot()->getChildrenList();
     // Adding moons to solarSystem
-    children.push_back(solarSystem.getRoot()->getChildren("moon"));
+    children.push_back(solar_system_.getRoot()->getChildren("moon"));
 
     // iteration through all planets and moons
     for (auto child: children) {
@@ -139,10 +140,10 @@ void ApplicationSolar::uploadUniforms() {
 }
 
 ///////////////////////////// intialisation functions /////////////////////////
-SceneGraph ApplicationSolar::initializeSolarSystem() const {
+void ApplicationSolar::initializeSolarSystem(){
     // scenegraph with root
     std::shared_ptr<Node> root = std::make_shared<Node>("root");
-    SceneGraph solarSystem = SceneGraph("solarSystem", root);
+    solar_system_ = SceneGraph("solarSystem", root);
 
 //    std::shared_ptr<Node> stars_container = std::make_shared<Node>("stars_container", root);
 //    root->addChildren(stars_container);
@@ -235,8 +236,6 @@ SceneGraph ApplicationSolar::initializeSolarSystem() const {
     neptun_holder->setSize(2.0f);
     root->addChildren(neptun_holder);
     neptun_holder->addChildren(geo_neptun);
-
-    return solarSystem;
 }
 
 // load shader sources

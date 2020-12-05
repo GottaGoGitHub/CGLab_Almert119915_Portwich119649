@@ -15,7 +15,7 @@ std::string SceneGraph::getName() {
     return name_;
 }
 
-std::shared_ptr<Node> SceneGraph::getRoot() {
+std::shared_ptr<Node> SceneGraph::getRoot() const {
     return root_;
 }
 
