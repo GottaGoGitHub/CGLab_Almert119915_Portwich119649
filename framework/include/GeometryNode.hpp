@@ -13,6 +13,8 @@ public:
 
     GeometryNode(const std::shared_ptr<Node> &parent, std::string name);
 
+    GeometryNode(const std::shared_ptr<Node> &parent, std::string name, model geometry);
+
     // destructor
     ~GeometryNode();
 

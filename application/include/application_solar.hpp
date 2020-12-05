@@ -27,6 +27,9 @@ public:
     // draw all objects
     void render() const;
 
+    // draw nice orbits (Extra)
+    void renderOrbits() const;
+
 protected:
 
     void initializeSolarSystem();
@@ -54,6 +57,7 @@ protected:
     // cpu representation of model
     model_object planet_object;
     model_object star_object;
+    model_object orbit_object;
 
     // camera transform matrix
     glm::fmat4 m_view_transform;

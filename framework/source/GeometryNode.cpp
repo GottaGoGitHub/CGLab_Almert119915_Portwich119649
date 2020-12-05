@@ -11,6 +11,12 @@ GeometryNode::GeometryNode(const std::shared_ptr<Node> &parent, std::string name
     this->setParent(parent);
 }
 
+GeometryNode::GeometryNode(const std::shared_ptr<Node> &parent, std::string name, model geometry) :
+        Node(std::move(name)) {
+    this->setParent(parent);
+    this->geometry_ = geometry;
+}
+
 GeometryNode::~GeometryNode() = default;
 
 model GeometryNode::getGeometry() const{

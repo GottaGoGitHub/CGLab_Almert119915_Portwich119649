@@ -136,7 +136,6 @@ std::vector<std::shared_ptr<Node>> Node::getDrawable() {
                 auto child_drawable = child->getDrawable();
                 drawable.insert(drawable.end(), child_drawable.begin(), child_drawable.end());
             }
-
         }
     }
     return drawable;
