@@ -37,6 +37,6 @@ void main() {
   vec3 diffuse = diffuse_light_intensity * light_color;
   vec3 specular =  specular_light_intensity * specular_color;
 
-  out_Color = vec4((ambient + diffuse) + specular * light_color,1.0);
+  out_Color = vec4((ambient + diffuse) * planet_color + specular * light_color,1.0);
 
 }
