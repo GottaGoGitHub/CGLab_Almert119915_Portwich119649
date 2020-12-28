@@ -23,6 +23,8 @@ using namespace gl;
 #include <Node.hpp>
 #include <SceneGraph.hpp>
 #include <GeometryNode.hpp>
+#include <Color.hpp>
+#include <PointLightNode.hpp>
 
 ApplicationSolar::ApplicationSolar(std::string const &resource_path)
         : Application{resource_path}, planet_object{}, star_object{},
@@ -46,12 +48,20 @@ void ApplicationSolar::render() const {
 
     // bind shader to upload uniforms
     glUseProgram(m_shaders.at("planet").handle);
-    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
     auto children = solar_system_.getRoot()->getDrawable();
-//    auto children = solar_system_.getRoot()->getChildrenList();
-//    // Adding moons to solarSystem
-//    children.push_back(solar_system_.getRoot()->getChildren("moon"));
+    std::map<std::string, Color> color_map;
+    color_map.insert({"sun", {255, 255, 0}});
+    color_map.insert({"uranus", {188, 255, 252}});
+    color_map.insert({"venus", {251, 213, 152}});
+    color_map.insert({"earth", {78, 153, 255}});
+    color_map.insert({"moon", {219, 219, 219}});
+    color_map.insert({"mercury", {157, 157, 157}});
+    color_map.insert({"mars", {255, 80, 0}});
+    color_map.insert({"jupiter", {255, 207, 128}});
+    color_map.insert({"saturn", {229, 212, 186}});
+    color_map.insert({"neptune", {99, 204, 251}});
+
 
     // iteration through all planets and moons
     for (auto child: children) {
@@ -75,11 +85,42 @@ void ApplicationSolar::render() const {
         glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
                            1, GL_FALSE, glm::value_ptr(normal_mat));
 
+        // add planet color
+        int planetColorLocation = glGetUniformLocation(m_shaders.at("planet").handle, "planet_color");
+        Color planet_color = color_map[child->getName()];
+        glUniform3f(planetColorLocation, planet_color.r / 255.0f, planet_color.g / 255.0f, planet_color.b / 255.0f);
+
+        //update the position, intensity and color of the point light
+        auto light_node = solar_system_.getRoot()->getChildren("sun");
+        auto light = std::static_pointer_cast<PointLightNode> (light_node);
+        Color light_color = light->getColor();
+        float light_intensity = light->getLightIntensity();
+        glm::fvec4 light_position = light->getWorldTransform()*glm::fvec4(0.0f,0.0f,0.0f,1.0f);
+
+        int lightPositionLocation = glGetUniformLocation(m_shaders.at("planet").handle, "light_position");
+        glUniform3f(lightPositionLocation, light_position.x, light_position.y, light_position.z);
+
+        int lightIntensityLocation = glGetUniformLocation(m_shaders.at("planet").handle, "light_intensity");
+        glUniform1f(lightIntensityLocation, light_intensity);
+
+        int lightColorLocation = glGetUniformLocation(m_shaders.at("planet").handle, "light_color");
+        glUniform3f(lightColorLocation, light_color.r/255.0f, light_color.g/255.0f, light_color.b/255.0f);
+
+        int ambientStrengthLocation = glGetUniformLocation(m_shaders.at("planet").handle, "ambient_intensity");
+
+        if (child->getName() == "sun") {
+            glUniform1f(ambientStrengthLocation, 1.0);
+        } else {
+            glUniform1f(ambientStrengthLocation, 0.1);
+        }
+
         // bind the VAO to draw
         glBindVertexArray(planet_object.vertex_AO);
 
         // draw bound vertex array using bound shader
         glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
+
+
     }
     glUseProgram(m_shaders.at("star").handle);
     // bind the VAO to draw
@@ -180,11 +221,12 @@ void ApplicationSolar::initializeOrbits() {
     for (auto object: drawables) {
         orbit_points.clear();
         glm::mat4x4 rot_mat{};
-        if(object->getName().find("moon") != std::string::npos){
+        if (object->getName().find("moon") != std::string::npos) {
 
-            rot_mat = glm::translate(object->getParent()->getLocalTransform(), glm::fvec3{0.0f, 0.0f, object->getDistance()});
+            rot_mat = glm::translate(object->getParent()->getLocalTransform(),
+                                     glm::fvec3{0.0f, 0.0f, object->getDistance()});
             rot_mat = glm::rotate(rot_mat, angle, glm::fvec3{0.0f, 1.0f, 0.0f});
-        }else{
+        } else {
             rot_mat = glm::rotate(glm::mat4x4{}, angle, glm::fvec3{0.0f, 1.0f, 0.0f});
         }
         auto point = object->getLocalTransform() * glm::fvec4{0.0f, 0.0f, 0.0f, 1.0f};
@@ -229,16 +271,18 @@ void ApplicationSolar::initializeSolarSystem() {
     solar_system_ = SceneGraph("solarSystem", root);
 
     // sun
-    std::shared_ptr<Node> sun_holder = std::make_shared<Node>("sun", root);
+    std::shared_ptr<PointLightNode> sun_holder = std::make_shared<PointLightNode>("sun", root);
     std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
     root->addChildren(sun_holder);
+    sun_holder->setLightIntensity(100);
+    sun_holder->setColor(Color{255,255,255});
     sun_holder->setDistance(0.0f);
     sun_holder->setSize(7.0f);
     sun_holder->addChildren(geo_sun);
 
     // merkur
-    std::shared_ptr<Node> merkur_holder = std::make_shared<Node>("merkur", root);
-    std::shared_ptr<GeometryNode> geo_merkur = std::make_shared<GeometryNode>(merkur_holder, "geo_merkur");
+    std::shared_ptr<Node> merkur_holder = std::make_shared<Node>("mercury", root);
+    std::shared_ptr<GeometryNode> geo_merkur = std::make_shared<GeometryNode>(merkur_holder, "geo_mercury");
     merkur_holder->setSpeed(4.147f);
     merkur_holder->setDistance(5.0f + sun_holder->getSize());
     merkur_holder->setSize(0.38f);
@@ -309,8 +353,8 @@ void ApplicationSolar::initializeSolarSystem() {
     uranus_holder->addChildren(geo_uranus);
 
     // neptun
-    std::shared_ptr<Node> neptun_holder = std::make_shared<Node>("neptun", root);
-    std::shared_ptr<GeometryNode> geo_neptun = std::make_shared<GeometryNode>(saturn_holder, "geo_neptun");
+    std::shared_ptr<Node> neptun_holder = std::make_shared<Node>("neptune", root);
+    std::shared_ptr<GeometryNode> geo_neptun = std::make_shared<GeometryNode>(saturn_holder, "geo_neptune");
     neptun_holder->setSpeed(0.607f);
     neptun_holder->setDistance(60.0f + sun_holder->getSize()); //388.706
     neptun_holder->setSize(2.0f);
@@ -337,8 +381,8 @@ void ApplicationSolar::initializeShaderPrograms() {
     m_shaders.at("star").u_locs["ProjectionMatrix"] = -1;
 
     // store orbit shader in container
-    m_shaders.emplace("orbit", shader_program{{{GL_VERTEX_SHADER,m_resource_path + "shaders/simple.vert"},
-                                                       {GL_FRAGMENT_SHADER, m_resource_path + "shaders/simple.frag"}}});
+    m_shaders.emplace("orbit", shader_program{{{GL_VERTEX_SHADER, m_resource_path + "shaders/orbit.vert"},
+                                                      {GL_FRAGMENT_SHADER, m_resource_path + "shaders/orbit.frag"}}});
     // request uniform locations for shader program
     m_shaders.at("orbit").u_locs["ModelMatrix"] = -1;
     m_shaders.at("orbit").u_locs["ViewMatrix"] = -1;
@@ -350,7 +394,6 @@ void ApplicationSolar::initializeStarsGeometry() {
     int const numberStars = 5000;
     std::vector<GLfloat> stars; //= std::vector<GLfloat>(6 * numberStars * sizeof(float));
     stars.reserve(6 * numberStars * sizeof(float));
-    std::cout << stars.size();
 
     for (int i = 0; i < numberStars; i++) {
         float rand_x = static_cast<float>(std::rand() % 100) - 50.0f;
