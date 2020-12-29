@@ -111,7 +111,7 @@ void ApplicationSolar::render() const {
         if (child->getName() == "sun") {
             glUniform1f(ambientStrengthLocation, 1.0);
         } else {
-            glUniform1f(ambientStrengthLocation, 1.1);
+            glUniform1f(ambientStrengthLocation, 0.2);
         }
 
         // bind the VAO to draw
