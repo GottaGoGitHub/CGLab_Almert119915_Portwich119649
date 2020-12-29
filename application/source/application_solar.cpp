@@ -30,7 +30,8 @@ ApplicationSolar::ApplicationSolar(std::string const &resource_path)
         : Application{resource_path}, planet_object{}, star_object{},
           m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})},
           m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)},
-          solar_system_{} {
+          solar_system_{},
+          current_planet_shader_{"planet"} {
     initializeGeometry();
     initializeShaderPrograms();
     initializeSolarSystem();
@@ -46,6 +47,12 @@ ApplicationSolar::~ApplicationSolar() {
 
 void ApplicationSolar::render() const {
 
+    renderPlanets();
+    renderStars();
+    renderOrbits();
+}
+
+void ApplicationSolar::renderPlanets() const {
     auto children = solar_system_.getRoot()->getDrawable();
     std::map<std::string, Color> color_map;
     color_map.insert({"sun", {255, 255, 0}});
@@ -64,7 +71,7 @@ void ApplicationSolar::render() const {
     for (auto child: children) {
         auto parent = child->getParent();
 
-        child->setLocalTransform(glm::rotate(parent->getLocalTransform(), float(glfwGetTime() * 0.1 * child->getSpeed()),
+        child->setLocalTransform(glm::rotate(parent->getLocalTransform(), float(glfwGetTime() * child->getSpeed()),
                                              glm::fvec3{0.0f, 1.0f, 0.0f}));
 
         child->setLocalTransform(
@@ -74,41 +81,43 @@ void ApplicationSolar::render() const {
                                             glm::vec3(child->getSize(), child->getSize(), child->getSize())));
 
         // bind shader to upload uniforms
-        glUseProgram(m_shaders.at("planet").handle);
+        glUseProgram(m_shaders.at(current_planet_shader_).handle);
 
         auto model_mat = child->getLocalTransform();
-        glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
+        glUniformMatrix4fv(m_shaders.at(current_planet_shader_).u_locs.at("ModelMatrix"),
                            1, GL_FALSE, glm::value_ptr(model_mat));
 
         auto normal_mat = glm::inverseTranspose(glm::inverse(m_view_transform) * child->getLocalTransform());
-        glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
+        glUniformMatrix4fv(m_shaders.at(current_planet_shader_).u_locs.at("NormalMatrix"),
                            1, GL_FALSE, glm::value_ptr(normal_mat));
 
         // bind the VAO to draw
         glBindVertexArray(planet_object.vertex_AO);
 
         // add planet color
-        int planetColorLocation = glGetUniformLocation(m_shaders.at("planet").handle, "planet_color");
+        int planetColorLocation = glGetUniformLocation(m_shaders.at(current_planet_shader_).handle, "planet_color");
         Color planet_color = color_map[child->getName()];
         glUniform3f(planetColorLocation, planet_color.r / 255.0f, planet_color.g / 255.0f, planet_color.b / 255.0f);
 
         //update the position, intensity and color of the point light
         auto light_node = solar_system_.getRoot()->getChildren("sun");
-        auto light = std::static_pointer_cast<PointLightNode> (light_node);
+        auto light = std::static_pointer_cast<PointLightNode>(light_node);
         Color light_color = light->getColor();
         float light_intensity = light->getLightIntensity();
-        glm::fvec4 light_position = light->getWorldTransform()*glm::fvec4(0.0f,0.0f,0.0f,1.0f);
+        glm::fvec4 light_position = light->getWorldTransform() * glm::fvec4(0.0f, 0.0f, 0.0f, 1.0f);
 
-        int lightPositionLocation = glGetUniformLocation(m_shaders.at("planet").handle, "light_position");
+        int lightPositionLocation = glGetUniformLocation(m_shaders.at(current_planet_shader_).handle, "light_position");
         glUniform3f(lightPositionLocation, light_position.x, light_position.y, light_position.z);
 
-        int lightIntensityLocation = glGetUniformLocation(m_shaders.at("planet").handle, "light_intensity");
+        int lightIntensityLocation = glGetUniformLocation(m_shaders.at(current_planet_shader_).handle,
+                                                          "light_intensity");
         glUniform1f(lightIntensityLocation, light_intensity);
 
-        int lightColorLocation = glGetUniformLocation(m_shaders.at("planet").handle, "light_color");
-        glUniform3f(lightColorLocation, light_color.r/255.0f, light_color.g/255.0f, light_color.b/255.0f);
+        int lightColorLocation = glGetUniformLocation(m_shaders.at(current_planet_shader_).handle, "light_color");
+        glUniform3f(lightColorLocation, light_color.r / 255.0f, light_color.g / 255.0f, light_color.b / 255.0f);
 
-        int ambientStrengthLocation = glGetUniformLocation(m_shaders.at("planet").handle, "ambient_intensity");
+        int ambientStrengthLocation = glGetUniformLocation(m_shaders.at(current_planet_shader_).handle,
+                                                           "ambient_intensity");
 
         if (child->getName() == "sun") {
             glUniform1f(ambientStrengthLocation, 1.0);
@@ -121,13 +130,14 @@ void ApplicationSolar::render() const {
 
 
     }
+}
+
+void ApplicationSolar::renderStars() const {
     glUseProgram(m_shaders.at("star").handle);
     // bind the VAO to draw
     glBindVertexArray(star_object.vertex_AO);
     // draw bound vertex array using bound shader
     glDrawArrays(star_object.draw_mode, GLint(0), star_object.num_elements);
-
-    renderOrbits();
 }
 
 void ApplicationSolar::renderOrbits() const {
@@ -136,7 +146,9 @@ void ApplicationSolar::renderOrbits() const {
     auto drawables = solar_system_.getRoot()->getDrawable();
     //for every orbit of a planet draw it
     for (auto object : drawables) {
-
+        if(object->getName() == "moon"){
+            continue;
+        }
         //get the geometry of the orbit that is stored in the node
         auto orbit = object->getChildren(object->getName() + "_geom_orbit");
 
@@ -175,6 +187,11 @@ void ApplicationSolar::uploadView() {
     glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ViewMatrix"),
                        1, GL_FALSE, glm::value_ptr(view_matrix));
 
+    glUseProgram(m_shaders.at("cel_shading").handle);
+    // upload matrix to gpu
+    glUniformMatrix4fv(m_shaders.at("cel_shading").u_locs.at("ViewMatrix"),
+                       1, GL_FALSE, glm::value_ptr(view_matrix));
+
     glUseProgram(m_shaders.at("orbit").handle);
 
     glUniformMatrix4fv(m_shaders.at("orbit").u_locs.at("ViewMatrix"),
@@ -195,6 +212,12 @@ void ApplicationSolar::uploadProjection() {
     glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ProjectionMatrix"),
                        1, GL_FALSE, glm::value_ptr(m_view_projection));
 
+    glUseProgram(m_shaders.at("cel_shading").handle);
+
+    // upload matrix to gpu
+    glUniformMatrix4fv(m_shaders.at("cel_shading").u_locs.at("ProjectionMatrix"),
+                       1, GL_FALSE, glm::value_ptr(m_view_projection));
+
     // upload matrix to gpu
     glUseProgram(m_shaders.at("orbit").handle);
 
@@ -204,8 +227,6 @@ void ApplicationSolar::uploadProjection() {
 
 // update uniform locations
 void ApplicationSolar::uploadUniforms() {
-    // bind shader to which to upload unforms
-    glUseProgram(m_shaders.at("planet").handle);
     // upload uniform values to new locations
     uploadView();
     uploadProjection();
@@ -274,7 +295,7 @@ void ApplicationSolar::initializeSolarSystem() {
     std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
     root->addChildren(sun_holder);
     sun_holder->setLightIntensity(1);
-    sun_holder->setColor(Color{255,255,255});
+    sun_holder->setColor(Color{255, 255, 255});
     sun_holder->setDistance(0.0f);
     sun_holder->setSize(7.0f);
     sun_holder->addChildren(geo_sun);
@@ -371,6 +392,16 @@ void ApplicationSolar::initializeShaderPrograms() {
     m_shaders.at("planet").u_locs["ModelMatrix"] = -1;
     m_shaders.at("planet").u_locs["ViewMatrix"] = -1;
     m_shaders.at("planet").u_locs["ProjectionMatrix"] = -1;
+
+    // store shader program objects in container
+    m_shaders.emplace("cel_shading", shader_program{{{GL_VERTEX_SHADER, m_resource_path + "shaders/cel_shading.vert"},
+                                                            {GL_FRAGMENT_SHADER,
+                                                                    m_resource_path + "shaders/cel_shading.frag"}}});
+    // request uniform locations for shader program
+    m_shaders.at("cel_shading").u_locs["NormalMatrix"] = -1;
+    m_shaders.at("cel_shading").u_locs["ModelMatrix"] = -1;
+    m_shaders.at("cel_shading").u_locs["ViewMatrix"] = -1;
+    m_shaders.at("cel_shading").u_locs["ProjectionMatrix"] = -1;
 
     m_shaders.emplace("star", shader_program{{{GL_VERTEX_SHADER, m_resource_path + "shaders/vao.vert"},
                                                      {GL_FRAGMENT_SHADER, m_resource_path + "shaders/vao.frag"}}});
@@ -490,6 +521,12 @@ void ApplicationSolar::keyCallback(int key, int action, int mods) {
         uploadView();
     } else if (key == GLFW_KEY_U && (action == GLFW_PRESS || action == GLFW_REPEAT)) {
         m_view_transform = glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 50.0f, 0.0f});
+        uploadView();
+    } else if (key == GLFW_KEY_1 && (action == GLFW_PRESS)) {
+        current_planet_shader_ = "planet";
+        uploadView();
+    } else if (key == GLFW_KEY_2 && (action == GLFW_PRESS)) {
+        current_planet_shader_ = "cel_shading";
         uploadView();
     }
 }

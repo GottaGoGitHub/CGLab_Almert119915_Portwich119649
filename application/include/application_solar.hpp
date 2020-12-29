@@ -27,6 +27,10 @@ public:
     // draw all objects
     void render() const;
 
+    void renderPlanets() const;
+
+    void renderStars() const;
+
     // draw nice orbits (Extra)
     void renderOrbits() const;
 
@@ -63,6 +67,8 @@ protected:
     glm::fmat4 m_view_transform;
     // camera projection matrix
     glm::fmat4 m_view_projection;
+
+    std::string current_planet_shader_;
 };
 
 #endif

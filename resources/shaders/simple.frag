@@ -2,7 +2,6 @@
 
 in vec3 pass_Normal, pass_Position, pass_Camera_Position;
 in mat4 pass_ViewMatrix, pass_ModelMatrix, pass_NormalMatrix;
-in vec2 pass_TexCoord;
 
 out vec4 out_Color;
 
