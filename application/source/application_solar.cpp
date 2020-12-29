@@ -46,9 +46,6 @@ ApplicationSolar::~ApplicationSolar() {
 
 void ApplicationSolar::render() const {
 
-    // bind shader to upload uniforms
-    glUseProgram(m_shaders.at("planet").handle);
-
     auto children = solar_system_.getRoot()->getDrawable();
     std::map<std::string, Color> color_map;
     color_map.insert({"sun", {255, 255, 0}});
@@ -67,7 +64,7 @@ void ApplicationSolar::render() const {
     for (auto child: children) {
         auto parent = child->getParent();
 
-        child->setLocalTransform(glm::rotate(parent->getLocalTransform(), float(glfwGetTime() * child->getSpeed()),
+        child->setLocalTransform(glm::rotate(parent->getLocalTransform(), float(glfwGetTime() * 0.1 * child->getSpeed()),
                                              glm::fvec3{0.0f, 1.0f, 0.0f}));
 
         child->setLocalTransform(
@@ -76,6 +73,8 @@ void ApplicationSolar::render() const {
         child->setLocalTransform(glm::scale(child->getLocalTransform(),
                                             glm::vec3(child->getSize(), child->getSize(), child->getSize())));
 
+        // bind shader to upload uniforms
+        glUseProgram(m_shaders.at("planet").handle);
 
         auto model_mat = child->getLocalTransform();
         glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("ModelMatrix"),
@@ -84,6 +83,9 @@ void ApplicationSolar::render() const {
         auto normal_mat = glm::inverseTranspose(glm::inverse(m_view_transform) * child->getLocalTransform());
         glUniformMatrix4fv(m_shaders.at("planet").u_locs.at("NormalMatrix"),
                            1, GL_FALSE, glm::value_ptr(normal_mat));
+
+        // bind the VAO to draw
+        glBindVertexArray(planet_object.vertex_AO);
 
         // add planet color
         int planetColorLocation = glGetUniformLocation(m_shaders.at("planet").handle, "planet_color");
@@ -111,11 +113,8 @@ void ApplicationSolar::render() const {
         if (child->getName() == "sun") {
             glUniform1f(ambientStrengthLocation, 1.0);
         } else {
-            glUniform1f(ambientStrengthLocation, 0.2);
+            glUniform1f(ambientStrengthLocation, 0.5);
         }
-
-        // bind the VAO to draw
-        glBindVertexArray(planet_object.vertex_AO);
 
         // draw bound vertex array using bound shader
         glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
@@ -274,7 +273,7 @@ void ApplicationSolar::initializeSolarSystem() {
     std::shared_ptr<PointLightNode> sun_holder = std::make_shared<PointLightNode>("sun", root);
     std::shared_ptr<GeometryNode> geo_sun = std::make_shared<GeometryNode>(sun_holder, "geo_sun");
     root->addChildren(sun_holder);
-    sun_holder->setLightIntensity(100);
+    sun_holder->setLightIntensity(1);
     sun_holder->setColor(Color{255,255,255});
     sun_holder->setDistance(0.0f);
     sun_holder->setSize(7.0f);
