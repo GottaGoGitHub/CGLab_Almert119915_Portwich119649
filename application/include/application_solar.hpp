@@ -2,6 +2,7 @@
 #define APPLICATION_SOLAR_HPP
 
 #include <SceneGraph.hpp>
+#include <Color.hpp>
 #include "application.hpp"
 #include "model.hpp"
 #include "structs.hpp"
@@ -69,6 +70,8 @@ protected:
     glm::fmat4 m_view_projection;
 
     std::string current_planet_shader_;
+
+    std::map<std::string, Color> color_map;
 };
 
 #endif

@@ -31,7 +31,7 @@ ApplicationSolar::ApplicationSolar(std::string const &resource_path)
           m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})},
           m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)},
           solar_system_{},
-          current_planet_shader_{"planet"} {
+          current_planet_shader_{"planet"}, color_map{} {
     initializeGeometry();
     initializeShaderPrograms();
     initializeSolarSystem();
@@ -54,19 +54,6 @@ void ApplicationSolar::render() const {
 
 void ApplicationSolar::renderPlanets() const {
     auto children = solar_system_.getRoot()->getDrawable();
-    std::map<std::string, Color> color_map;
-    color_map.insert({"sun", {255, 255, 0}});
-    color_map.insert({"uranus", {188, 255, 252}});
-    color_map.insert({"venus", {251, 213, 152}});
-    color_map.insert({"earth", {78, 153, 255}});
-    color_map.insert({"moon", {219, 219, 219}});
-    color_map.insert({"mercury", {157, 157, 157}});
-    color_map.insert({"mars", {255, 80, 0}});
-    color_map.insert({"jupiter", {255, 207, 128}});
-    color_map.insert({"saturn", {229, 212, 186}});
-    color_map.insert({"neptune", {99, 204, 251}});
-
-
     // iteration through all planets and moons
     for (auto child: children) {
         auto parent = child->getParent();
@@ -96,7 +83,7 @@ void ApplicationSolar::renderPlanets() const {
 
         // add planet color
         int planetColorLocation = glGetUniformLocation(m_shaders.at(current_planet_shader_).handle, "planet_color");
-        Color planet_color = color_map[child->getName()];
+        Color planet_color = color_map.find(child->getName())->second;
         glUniform3f(planetColorLocation, planet_color.r / 255.0f, planet_color.g / 255.0f, planet_color.b / 255.0f);
 
         //update the position, intensity and color of the point light
@@ -380,6 +367,17 @@ void ApplicationSolar::initializeSolarSystem() {
     neptun_holder->setSize(2.0f);
     root->addChildren(neptun_holder);
     neptun_holder->addChildren(geo_neptun);
+
+    color_map.insert({"sun", {255, 255, 0}});
+    color_map.insert({"uranus", {188, 255, 252}});
+    color_map.insert({"venus", {251, 213, 152}});
+    color_map.insert({"earth", {78, 153, 255}});
+    color_map.insert({"moon", {219, 219, 219}});
+    color_map.insert({"mercury", {157, 157, 157}});
+    color_map.insert({"mars", {255, 80, 0}});
+    color_map.insert({"jupiter", {255, 207, 128}});
+    color_map.insert({"saturn", {229, 212, 186}});
+    color_map.insert({"neptune", {99, 204, 251}});
 }
 
 // load shader sources
