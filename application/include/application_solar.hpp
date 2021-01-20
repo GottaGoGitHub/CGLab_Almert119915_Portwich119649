@@ -35,6 +35,8 @@ public:
     // draw nice orbits (Extra)
     void renderOrbits() const;
 
+    void renderSkybox() const;
+
 protected:
 
     void initializeSolarSystem();
@@ -46,6 +48,8 @@ protected:
     void initializeStarsGeometry();
 
     void initializeOrbits();
+
+    void initializeTextures();
 
     // update uniform values
     void uploadUniforms();
@@ -63,6 +67,7 @@ protected:
     model_object planet_object;
     model_object star_object;
     model_object orbit_object;
+    model_object skybox_object;
 
     // camera transform matrix
     glm::fmat4 m_view_transform;
@@ -72,6 +77,13 @@ protected:
     std::string current_planet_shader_;
 
     std::map<std::string, Color> color_map;
+
+    std::map<std::string, texture_object> texture_map;
+
+    // need vector to hold pixel-data of skybox-tex
+    std::vector<pixel_data> skybox_contain_pixdata_;
+    // add skybox texture_object
+    texture_object skybox_texture_obj_;
 };
 
 #endif
