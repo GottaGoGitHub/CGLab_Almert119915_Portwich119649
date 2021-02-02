@@ -33,26 +33,70 @@ ApplicationSolar::ApplicationSolar(std::string const &resource_path)
           m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})},
           m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)},
           solar_system_{},
-          current_planet_shader_{"planet"}, color_map{}, texture_map{} {
+          current_planet_shader_{"planet"}, color_map{}, texture_map{}, screenquad_object{}, framebuffer_obj{} {
     initializeGeometry();
     initializeShaderPrograms();
     initializeSolarSystem();
     initializeTextures();
+    initializeFramebuffer(initial_resolution.x, initial_resolution.y);
     initializeStarsGeometry();
     initializeOrbits();
+    initializeScreenquad();
 }
 
 ApplicationSolar::~ApplicationSolar() {
     glDeleteBuffers(1, &planet_object.vertex_BO);
     glDeleteBuffers(1, &planet_object.element_BO);
     glDeleteVertexArrays(1, &planet_object.vertex_AO);
+    glDeleteBuffers(1, &star_object.vertex_BO);
+    glDeleteBuffers(1, &star_object.element_BO);
+    glDeleteVertexArrays(1, &star_object.vertex_AO);
+
+    glDeleteBuffers(1, &orbit_object.vertex_BO);
+    glDeleteBuffers(1, &orbit_object.element_BO);
+    glDeleteVertexArrays(1, &orbit_object.vertex_AO);
+
+    glDeleteBuffers(1, &skybox_object.vertex_BO);
+    glDeleteBuffers(1, &skybox_object.element_BO);
+    glDeleteVertexArrays(1, &skybox_object.vertex_AO);
+
+    glDeleteBuffers(1, &screenquad_object.vertex_BO);
+    glDeleteBuffers(1, &screenquad_object.element_BO);
+    glDeleteVertexArrays(1, &screenquad_object.vertex_AO);
 }
 
 void ApplicationSolar::render() const {
+    //render to texture
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_obj.handle);
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
     renderSkybox();
     renderPlanets();
     renderStars();
     renderOrbits();
+    //render to default for display
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT);
+    glDisable(GL_DEPTH_TEST);
+    renderScreenQuad();
+}
+
+void ApplicationSolar::renderScreenQuad() const {
+
+    glUseProgram(m_shaders.at("simple_screen_quad").handle);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, framebuffer_obj.texture_handle);
+
+    // add sampler
+    int samplerLocation = glGetUniformLocation(m_shaders.at("simple_screen_quad").handle, "screenTexture");
+    glUniform1i(samplerLocation, 0);//framebuffer_obj.texture_obj.handle);
+
+    //render quad
+    glBindVertexArray(screenquad_object.vertex_AO);
+    glDrawArrays(screenquad_object.draw_mode, 0, screenquad_object.num_elements);
 }
 
 void ApplicationSolar::renderPlanets() const {
@@ -62,8 +106,9 @@ void ApplicationSolar::renderPlanets() const {
     for (auto child: children) {
         auto parent = child->getParent();
 
-        child->setLocalTransform(glm::rotate(parent->getLocalTransform(), float(glfwGetTime() * child->getSpeed()),
-                                             glm::fvec3{0.0f, 1.0f, 0.0f}));
+        child->setLocalTransform(
+                glm::rotate(parent->getLocalTransform(), float(glfwGetTime() * time * child->getSpeed()),
+                            glm::fvec3{0.0f, 1.0f, 0.0f}));
 
         child->setLocalTransform(
                 glm::translate(child->getLocalTransform(), glm::fvec3{0.0f, 0.0f, child->getDistance()}));
@@ -132,7 +177,7 @@ void ApplicationSolar::renderPlanets() const {
         }
 
         // draw bound vertex array using bound shader
-        glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, NULL);
+        glDrawElements(planet_object.draw_mode, planet_object.num_elements, model::INDEX.type, nullptr);
         index++;
     }
 }
@@ -184,7 +229,7 @@ void ApplicationSolar::renderSkybox() const {
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, skybox_texture_obj_.handle);
     glBindVertexArray(skybox_object.vertex_AO);
-    glDrawElements(skybox_object.draw_mode, skybox_object.num_elements, model::INDEX.type, NULL);
+    glDrawElements(skybox_object.draw_mode, skybox_object.num_elements, model::INDEX.type, nullptr);
     glDepthMask(GL_TRUE);
 }
 
@@ -216,6 +261,14 @@ void ApplicationSolar::uploadView() {
     glUseProgram(m_shaders.at("skybox").handle);
     glUniformMatrix4fv(m_shaders.at("skybox").u_locs.at("ViewMatrix"),
                        1, GL_FALSE, glm::value_ptr(view_matrix));
+
+    glUseProgram(m_shaders.at("simple_screen_quad").handle);
+
+    glUniform1i(m_shaders.at("simple_screen_quad").u_locs.at("horizontalMirroring"), horizontal_mirroring);
+    glUniform1i(m_shaders.at("simple_screen_quad").u_locs.at("verticalMirroring"), vertical_mirroring);
+    glUniform1i(m_shaders.at("simple_screen_quad").u_locs.at("greyscale"), greyscale);
+    glUniform1i(m_shaders.at("simple_screen_quad").u_locs.at("blur"), blur);
+    glUniform2f(m_shaders.at("simple_screen_quad").u_locs.at("textureSize"), img_width, img_height);
 }
 
 void ApplicationSolar::uploadProjection() {
@@ -255,6 +308,91 @@ void ApplicationSolar::uploadUniforms() {
     // upload uniform values to new locations
     uploadView();
     uploadProjection();
+}
+
+bool ApplicationSolar::initializeFramebuffer(unsigned width, unsigned height) {
+
+    //generate Framebuffer
+    glGenFramebuffers(1, &framebuffer_obj.handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_obj.handle);
+
+    //create texture attachment as color_attachment
+    texture_object texture;
+    glActiveTexture(GL_TEXTURE0);
+    glGenTextures(1, &texture.handle);
+    glBindTexture(GL_TEXTURE_2D, texture.handle);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.handle, 0);
+
+    framebuffer_obj.texture_obj = texture;
+    framebuffer_obj.texture_handle = texture.handle;
+
+    //create renderbuffer attachment (depth attachment)
+    unsigned int renderbuffer_object;
+    glGenRenderbuffers(1, &renderbuffer_object);
+    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer_object);
+
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer_object);
+
+    framebuffer_obj.renderbuffer_handle = renderbuffer_object;
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, drawBuffers);
+
+    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+        std::cout << "Error Framebuffer is broken\n";
+        return false;
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    return true;
+}
+
+void ApplicationSolar::initializeScreenquad() {
+    //create quad
+    std::vector<GLfloat> quad = {
+            //v4
+            -1.0f, 1.0f, 0.0f, 1.0f,
+            //v1
+            -1.0f, -1.0f, 0.0f, 0.0f,
+            //v2
+            1.0f, -1.0f, 1.0f, 0.0f,
+            //v4
+            -1.0f, 1.0f, 0.0f, 1.0f,
+            //v2
+            1.0f, -1.0f, 1.0f, 0.0f,
+            //v3
+            1.0f, 1.0f, 1.0f, 1.0f
+    };
+
+    //create a new VertexArray
+    glGenVertexArrays(1, &screenquad_object.vertex_AO);
+    glBindVertexArray(screenquad_object.vertex_AO);
+
+    //generate a new Buffer and bind it to the new VertexArray
+    glGenBuffers(1, &screenquad_object.vertex_BO);
+    glBindBuffer(GL_ARRAY_BUFFER, screenquad_object.vertex_BO);
+    //specify the size of the data
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * quad.size(), quad.data(), GL_STATIC_DRAW);
+
+    // first attribArray for positions
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, GLsizei(4 * sizeof(float)), nullptr);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, GLsizei(4 * sizeof(float)), (void *) (2 * sizeof(float)));
+
+    //specify the draw mode and the number of elements
+    screenquad_object.draw_mode = GL_TRIANGLE_STRIP;
+    screenquad_object.num_elements = GLsizei(quad.size() / 4);
 }
 
 void ApplicationSolar::initializeOrbits() {
@@ -465,6 +603,19 @@ void ApplicationSolar::initializeShaderPrograms() {
     // request uniform location for shader program
     m_shaders.at("skybox").u_locs["ProjectionMatrix"] = -1;
     m_shaders.at("skybox").u_locs["ViewMatrix"] = -1;
+
+    //store quad shader for working with extra framebuffer
+    m_shaders.emplace("simple_screen_quad",
+                      shader_program{{{GL_VERTEX_SHADER, m_resource_path + "shaders/simple_screen_quad.vert"},
+                                             {GL_FRAGMENT_SHADER,
+                                                     m_resource_path + "shaders/simple_screen_quad.frag"}}});
+
+    m_shaders.at("simple_screen_quad").u_locs["screenTexture"] = -1;
+    m_shaders.at("simple_screen_quad").u_locs["horizontalMirroring"] = 0;
+    m_shaders.at("simple_screen_quad").u_locs["verticalMirroring"] = 0;
+    m_shaders.at("simple_screen_quad").u_locs["greyscale"] = 0;
+    m_shaders.at("simple_screen_quad").u_locs["blur"] = 0;
+    m_shaders.at("simple_screen_quad").u_locs["textureSize"] = -1;
 }
 
 void ApplicationSolar::initializeStarsGeometry() {
@@ -496,7 +647,7 @@ void ApplicationSolar::initializeStarsGeometry() {
 
     // first attribArray for positions
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, GLsizei(6 * sizeof(float)), 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, GLsizei(6 * sizeof(float)), nullptr);
 
     // second attribArray for colors
     glEnableVertexAttribArray(1);
@@ -741,6 +892,23 @@ void ApplicationSolar::keyCallback(int key, int action, int mods) {
     } else if (key == GLFW_KEY_2 && (action == GLFW_PRESS)) {
         current_planet_shader_ = "cel_shading";
         uploadView();
+    } else if (key == GLFW_KEY_3 && (action == GLFW_PRESS)) {
+        time = !time;
+    }
+
+    //postprocessing
+    if (key == GLFW_KEY_4 && (action == GLFW_PRESS)) {
+        horizontal_mirroring = !horizontal_mirroring;
+        uploadView();
+    } else if (key == GLFW_KEY_5 && (action == GLFW_PRESS)) {
+        vertical_mirroring = !vertical_mirroring;
+        uploadView();
+    } else if (key == GLFW_KEY_6 && (action == GLFW_PRESS)) {
+        greyscale = !greyscale;
+        uploadView();
+    } else if (key == GLFW_KEY_7 && (action == GLFW_PRESS)) {
+        blur = !blur;
+        uploadView();
     }
 }
 
@@ -768,6 +936,9 @@ void ApplicationSolar::resizeCallback(unsigned width, unsigned height) {
     m_view_projection = utils::calculate_projection_matrix(float(width) / float(height));
     // upload new projection matrix
     uploadProjection();
+    initializeFramebuffer(width, height);
+    img_width = width;
+    img_height = height;
 }
 
 

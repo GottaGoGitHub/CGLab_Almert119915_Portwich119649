@@ -31,15 +31,26 @@ struct texture_object {
 // shader handle and uniform storage
 struct shader_program {
   shader_program(std::map<GLenum, std::string> paths)
-   :shader_paths{paths}
-   ,handle{0}
-   {}
+   : shader_paths{paths}, handle{0} {}
 
-  // paths to shader sources
-  std::map<GLenum, std::string> shader_paths;
-  // object handle
-  GLuint handle;
-  // uniform locations mapped to name
-  std::map<std::string, GLint> u_locs{};
+    // paths to shader sources
+    std::map<GLenum, std::string> shader_paths;
+    // object handle
+    GLuint handle;
+    // uniform locations mapped to name
+    std::map<std::string, GLint> u_locs{};
+};
+
+// framebuffer attachments and handle
+struct framebuffer_object {
+    // handle of framebuffer object
+    GLuint handle = 0;
+
+    //color attachment
+    texture_object texture_obj;
+    GLuint texture_handle = 0;
+
+    //renderbuffer attachment
+    GLuint renderbuffer_handle;
 };
 #endif

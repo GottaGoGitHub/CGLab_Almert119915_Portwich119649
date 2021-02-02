@@ -37,6 +37,8 @@ public:
 
     void renderSkybox() const;
 
+    void renderScreenQuad() const;
+
 protected:
 
     void initializeSolarSystem();
@@ -50,6 +52,10 @@ protected:
     void initializeOrbits();
 
     void initializeTextures();
+
+    void initializeScreenquad();
+
+    bool initializeFramebuffer(unsigned width, unsigned height);
 
     // update uniform values
     void uploadUniforms();
@@ -69,6 +75,9 @@ protected:
     model_object orbit_object;
     model_object skybox_object;
 
+    model_object screenquad_object;
+    framebuffer_object framebuffer_obj;
+
     // camera transform matrix
     glm::fmat4 m_view_transform;
     // camera projection matrix
@@ -84,6 +93,15 @@ protected:
     std::vector<pixel_data> skybox_contain_pixdata_;
     // add skybox texture_object
     texture_object skybox_texture_obj_;
+
+private:
+    bool horizontal_mirroring = false;
+    bool vertical_mirroring = false;
+    bool greyscale = false;
+    bool blur = false;
+    unsigned img_width;
+    unsigned img_height;
+    bool time = true;
 };
 
 #endif
