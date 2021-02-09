@@ -33,15 +33,17 @@ ApplicationSolar::ApplicationSolar(std::string const &resource_path)
           m_view_transform{glm::translate(glm::fmat4{}, glm::fvec3{0.0f, 0.0f, 4.0f})},
           m_view_projection{utils::calculate_projection_matrix(initial_aspect_ratio)},
           solar_system_{},
-          current_planet_shader_{"planet"}, color_map{}, texture_map{}, screenquad_object{}, framebuffer_obj{} {
+          current_planet_shader_{"planet"}, color_map{}, texture_map{}, screenquad_object{}, framebuffer_object{} {
     initializeGeometry();
     initializeShaderPrograms();
     initializeSolarSystem();
     initializeTextures();
-    initializeFramebuffer(initial_resolution.x, initial_resolution.y);
     initializeStarsGeometry();
     initializeOrbits();
     initializeScreenquad();
+
+    // create framebuffer in Application constructor
+    initializeFramebuffer(initial_resolution.x, initial_resolution.y);
 }
 
 ApplicationSolar::~ApplicationSolar() {
@@ -66,8 +68,8 @@ ApplicationSolar::~ApplicationSolar() {
 }
 
 void ApplicationSolar::render() const {
-    //render to texture
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_obj.handle);
+    //render via framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_object.handle);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glEnable(GL_DEPTH_TEST);
@@ -75,7 +77,7 @@ void ApplicationSolar::render() const {
     renderPlanets();
     renderStars();
     renderOrbits();
-    //render to default for display
+    // default rendering (binds framebuffer to 0)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
@@ -88,7 +90,8 @@ void ApplicationSolar::renderScreenQuad() const {
     glUseProgram(m_shaders.at("simple_screen_quad").handle);
 
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, framebuffer_obj.texture_handle);
+    // render screenquad on framebuffer object
+    glBindTexture(GL_TEXTURE_2D, framebuffer_object.texture_handle);
 
     // add sampler
     int samplerLocation = glGetUniformLocation(m_shaders.at("simple_screen_quad").handle, "screenTexture");
@@ -310,13 +313,14 @@ void ApplicationSolar::uploadUniforms() {
     uploadProjection();
 }
 
+// init Framebuffer
 bool ApplicationSolar::initializeFramebuffer(unsigned width, unsigned height) {
 
     //generate Framebuffer
-    glGenFramebuffers(1, &framebuffer_obj.handle);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_obj.handle);
+    glGenFramebuffers(1, &framebuffer_object.handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_object.handle);
 
-    //create texture attachment as color_attachment
+    // create tex obj to use as color
     texture_object texture;
     glActiveTexture(GL_TEXTURE0);
     glGenTextures(1, &texture.handle);
@@ -331,10 +335,10 @@ bool ApplicationSolar::initializeFramebuffer(unsigned width, unsigned height) {
 
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.handle, 0);
 
-    framebuffer_obj.texture_obj = texture;
-    framebuffer_obj.texture_handle = texture.handle;
+    framebuffer_object.texture_obj = texture;
+    framebuffer_object.texture_handle = texture.handle;
 
-    //create renderbuffer attachment (depth attachment)
+    //create renderbuffer for depth attachment
     unsigned int renderbuffer_object;
     glGenRenderbuffers(1, &renderbuffer_object);
     glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer_object);
@@ -343,7 +347,7 @@ bool ApplicationSolar::initializeFramebuffer(unsigned width, unsigned height) {
 
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer_object);
 
-    framebuffer_obj.renderbuffer_handle = renderbuffer_object;
+    framebuffer_object.renderbuffer_handle = renderbuffer_object;
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
     GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};

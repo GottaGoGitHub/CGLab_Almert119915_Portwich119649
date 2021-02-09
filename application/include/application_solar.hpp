@@ -55,6 +55,7 @@ protected:
 
     void initializeScreenquad();
 
+    // create the framebuffer 
     bool initializeFramebuffer(unsigned width, unsigned height);
 
     // update uniform values
@@ -76,7 +77,9 @@ protected:
     model_object skybox_object;
 
     model_object screenquad_object;
-    framebuffer_object framebuffer_obj;
+
+    // create the framebuffer object with InitializeFramebuffer()
+    framebuffer_object framebuffer_object;
 
     // camera transform matrix
     glm::fmat4 m_view_transform;
