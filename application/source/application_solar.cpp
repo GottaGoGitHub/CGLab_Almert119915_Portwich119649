@@ -68,19 +68,25 @@ ApplicationSolar::~ApplicationSolar() {
 }
 
 void ApplicationSolar::render() const {
-    //render via framebuffer
+    // bind the framebuffer to the object handle
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_object.handle);
+    // clear the color buffers and set to the below values
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    // clear color and depth buffer
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    // enable depth comparisons and update depth buffer
     glEnable(GL_DEPTH_TEST);
+    // render everything
     renderSkybox();
     renderPlanets();
     renderStars();
     renderOrbits();
     // default rendering (binds framebuffer to 0)
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    // default color buffer is white
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
+    // disable depth comparison before rendering screenquad
     glDisable(GL_DEPTH_TEST);
     renderScreenQuad();
 }
@@ -313,54 +319,6 @@ void ApplicationSolar::uploadUniforms() {
     uploadProjection();
 }
 
-// init Framebuffer
-bool ApplicationSolar::initializeFramebuffer(unsigned width, unsigned height) {
-
-    //generate Framebuffer
-    glGenFramebuffers(1, &framebuffer_object.handle);
-    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_object.handle);
-
-    // create tex obj to use as color
-    texture_object texture;
-    glActiveTexture(GL_TEXTURE0);
-    glGenTextures(1, &texture.handle);
-    glBindTexture(GL_TEXTURE_2D, texture.handle);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.handle, 0);
-
-    framebuffer_object.texture_obj = texture;
-    framebuffer_object.texture_handle = texture.handle;
-
-    //create renderbuffer for depth attachment
-    unsigned int renderbuffer_object;
-    glGenRenderbuffers(1, &renderbuffer_object);
-    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer_object);
-
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
-
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer_object);
-
-    framebuffer_object.renderbuffer_handle = renderbuffer_object;
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
-
-    GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, drawBuffers);
-
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
-        std::cout << "Error Framebuffer is broken\n";
-        return false;
-    }
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    return true;
-}
-
 void ApplicationSolar::initializeScreenquad() {
     //create quad
     std::vector<GLfloat> quad = {
@@ -448,6 +406,55 @@ void ApplicationSolar::initializeOrbits() {
     // draw mode and the number of points
     orbit_object.draw_mode = GL_LINE_STRIP;
     orbit_object.num_elements = GLsizei(num_points);
+}
+
+
+// init Framebuffer
+bool ApplicationSolar::initializeFramebuffer(unsigned width, unsigned height) {
+
+    //generate Framebuffer and bind it
+    glGenFramebuffers(1, &framebuffer_object.handle);
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_object.handle);
+
+    // create tex obj to use as color
+    texture_object texture;
+    glActiveTexture(GL_TEXTURE0);
+    glGenTextures(1, &texture.handle);
+    glBindTexture(GL_TEXTURE_2D, texture.handle);
+
+    // specify 2d texture image
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
+
+    // set tex parameter min and max filter to GL_NEAREST
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texture.handle, 0);
+
+    framebuffer_object.texture_obj = texture;
+    framebuffer_object.texture_handle = texture.handle;
+
+    //create renderbuffer for depth attachment
+    unsigned int renderbuffer_object;
+    glGenRenderbuffers(1, &renderbuffer_object);
+    glBindRenderbuffer(GL_RENDERBUFFER, renderbuffer_object);
+
+    // establish storage for rednerbuffer object
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT16, width, height);
+
+    // attach renderbuffer to framebuffer 
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderbuffer_object);
+
+    framebuffer_object.renderbuffer_handle = renderbuffer_object;
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, drawBuffers);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    
+    return true;
 }
 
 
