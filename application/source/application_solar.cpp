@@ -450,10 +450,10 @@ bool ApplicationSolar::initializeFramebuffer(unsigned width, unsigned height) {
     framebuffer_object.renderbuffer_handle = renderbuffer_object;
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-    GLenum drawBuffers[1] = {GL_COLOR_ATTACHMENT0};
-    glDrawBuffers(1, drawBuffers);
+    GLenum draw_buffers[1] = {GL_COLOR_ATTACHMENT0};
+    glDrawBuffers(1, draw_buffers);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    
+
     return true;
 }
 
